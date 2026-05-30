@@ -19,10 +19,10 @@ function applyActions(actions) {
         p: Math.round(a.protein || 0), c: Math.round(a.carbs || 0), f: Math.round(a.fat || 0),
       });
       applied.push('Nutrition : ' + Math.round(a.kcal) + ' kcal');
-    } else if (a.type === 'set_meal_plan' && a.meals) {
-      const m = {};
-      for (const k of ['b', 'l', 's', 'd']) {
-        m[k] = (a.meals[k] || []).map((it) => ({ name: it.name, qty: it.qty, unit: it.unit, kcal: it.kcal, p: it.protein, c: it.carbs, f: it.fat }));
+    } else if (a.type === 'set_meal_plan' && Array.isArray(a.items)) {
+      const m = { b: [], l: [], s: [], d: [] };
+      for (const it of a.items) {
+        if (m[it.meal]) m[it.meal].push({ name: it.name, qty: it.qty, unit: it.unit, kcal: it.kcal, p: it.protein, c: it.carbs, f: it.fat });
       }
       setMeals(m);
       applied.push('Plan nutrition mis à jour');

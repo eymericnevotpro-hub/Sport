@@ -5,18 +5,18 @@
 const MODEL = 'claude-sonnet-4-6';
 const apiKey = process.env.ANTHROPIC_API_KEY;
 
-const FOOD_ITEM = {
+const PLAN_ITEM = {
   type: 'object',
   properties: {
+    meal: { type: 'string', enum: ['b', 'l', 's', 'd'], description: 'b=petit-déj, l=déjeuner, s=collation, d=dîner' },
     name: { type: 'string' },
     qty: { type: 'number', description: 'Quantité (ex: 150 pour 150 g, 2 pour 2 unités).' },
     unit: { type: 'string', description: "Unité ('g', '' pour unités, etc.)." },
     kcal: { type: 'number' },
     protein: { type: 'number' }, carbs: { type: 'number' }, fat: { type: 'number' },
   },
-  required: ['name', 'kcal'],
+  required: ['meal', 'name', 'kcal'],
 };
-const MEAL_ARRAY = { type: 'array', items: FOOD_ITEM };
 
 const RESPOND_TOOL = {
   name: 'respond',
@@ -48,10 +48,10 @@ const RESPOND_TOOL = {
                 required: ['key', 'sets', 'reps'],
               },
             },
-            meals: {
-              type: 'object',
-              description: "Pour set_meal_plan : repas de la journée (chaque aliment avec quantité + macros).",
-              properties: { b: MEAL_ARRAY, l: MEAL_ARRAY, s: MEAL_ARRAY, d: MEAL_ARRAY },
+            items: {
+              type: 'array',
+              description: "Pour set_meal_plan : TOUS les aliments de la journée, chacun avec son repas (champ meal), sa quantité et ses macros.",
+              items: PLAN_ITEM,
             },
           },
           required: ['type'],
