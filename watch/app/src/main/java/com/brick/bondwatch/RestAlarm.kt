@@ -25,9 +25,9 @@ fun vibrateEnd(ctx: Context) {
     vibrator(ctx).vibrate(VibrationEffect.createWaveform(pattern, -1))
 }
 
-// Petit retour haptique (validation d'une série).
+// Retour haptique net (validation / démarrage).
 fun vibrateClick(ctx: Context) {
-    vibrator(ctx).vibrate(VibrationEffect.createOneShot(45, VibrationEffect.DEFAULT_AMPLITUDE))
+    vibrator(ctx).vibrate(VibrationEffect.createOneShot(90, VibrationEffect.DEFAULT_AMPLITUDE))
 }
 
 class RestAlarmReceiver : BroadcastReceiver() {

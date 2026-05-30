@@ -58,6 +58,7 @@ class WorkoutViewModel(app: Application) : AndroidViewModel(app) {
         if (s.rest || s.exercises.isEmpty()) return
         started = true; done = false; exIndex = 0; setIndex = 0
         stopRest()
+        vibrateClick(getApplication()) // confirme tout de suite que la vibration marche
     }
 
     fun validateSet() {
