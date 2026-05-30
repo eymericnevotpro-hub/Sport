@@ -1,14 +1,16 @@
 /* App.jsx — routing, bottom nav, program-driven today, full-screen shell */
 import React from 'react';
-import { T, Icon } from './theme.jsx';
+import { T, Icon, applyAccent } from './theme.jsx';
 import { HomeScreen } from './screens/Home.jsx';
 import { ProgramScreen } from './screens/Program.jsx';
 import { SessionScreen } from './screens/Session.jsx';
 import { NutritionScreen } from './screens/Nutrition.jsx';
 import { ProgressScreen } from './screens/Progress.jsx';
-import { Tweaks } from './Tweaks.jsx';
 import { getProgramId, subscribeProgram } from './programStore.js';
 import { getProgramById, todayIndex, dayForSlot } from './programs.js';
+
+// Accent couleur par défaut : orange.
+applyAccent('#FF7A4D');
 
 // Nutrition goals (targets); consumed values start at 0 — user logs his own.
 const NUTRITION_GOAL = { kcalGoal: 2200, p: 160, c: 220, f: 70 };
@@ -20,7 +22,7 @@ const NAV = [
   { k: 'progress', l: 'Progrès', icon: 'chart' },
 ];
 
-function Phone({ accent }) {
+function Phone() {
   const [tab, setTab] = React.useState('home');
   const [sessionDay, setSessionDay] = React.useState(null);
   const [, bump] = React.useReducer((x) => x + 1, 0);
@@ -46,7 +48,7 @@ function Phone({ accent }) {
 
   return (
     <div style={{ position: 'relative', height: '100%', display: 'flex', flexDirection: 'column', background: T.bg, fontFamily: T.font }}>
-      <div key={tab + accent} className="app-scroll" style={{ flex: 1, overflowY: 'auto', overflowX: 'hidden', paddingTop: 'env(safe-area-inset-top)' }}>
+      <div key={tab} className="app-scroll" style={{ flex: 1, overflowY: 'auto', overflowX: 'hidden', paddingTop: 'env(safe-area-inset-top)' }}>
         {screen()}
       </div>
 
@@ -74,21 +76,13 @@ function Phone({ accent }) {
 }
 
 export default function App() {
-  const [accent, setAccent] = React.useState('#16E0A0');
-  const [reduceMotion, setReduceMotion] = React.useState(false);
-
-  React.useEffect(() => { document.body.classList.toggle('noanim', reduceMotion); }, [reduceMotion]);
-
   return (
-    <>
-      {/* Full-screen on phones; capped to a phone-width column on wider screens. */}
-      <div style={{
-        position: 'relative', width: '100%', maxWidth: 480, height: '100%',
-        background: T.bg, overflow: 'hidden', boxShadow: '0 0 60px rgba(14,26,20,.10)',
-      }}>
-        <Phone accent={accent} />
-      </div>
-      <Tweaks accent={accent} setAccent={setAccent} reduceMotion={reduceMotion} setReduceMotion={setReduceMotion} />
-    </>
+    // Full-screen on phones; capped to a phone-width column on wider screens.
+    <div style={{
+      position: 'relative', width: '100%', maxWidth: 480, height: '100%',
+      background: T.bg, overflow: 'hidden', boxShadow: '0 0 60px rgba(14,26,20,.10)',
+    }}>
+      <Phone />
+    </div>
   );
 }
