@@ -2,7 +2,8 @@
 // Répond en français et peut proposer des changements appliqués par l'app
 // (changer de programme, ajuster la nutrition) via l'outil `respond`.
 
-const MODEL = 'claude-sonnet-4-6';
+// Haiku : peu coûteux et rapide, suffisant pour le coach (réponses + actions).
+const MODEL = 'claude-haiku-4-5-20251001';
 const apiKey = process.env.ANTHROPIC_API_KEY;
 
 const PLAN_ITEM = {
