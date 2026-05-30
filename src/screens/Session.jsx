@@ -2,16 +2,40 @@
 import React from 'react';
 import { T, Icon, Ring, Chip, ExerciseGif } from '../theme.jsx';
 
+// Short beep when a rest timer ends (best-effort; ignored if audio is blocked).
+function playBeep() {
+  try {
+    const Ctx = window.AudioContext || window.webkitAudioContext;
+    if (!Ctx) return;
+    const ctx = new Ctx();
+    const o = ctx.createOscillator();
+    const g = ctx.createGain();
+    o.connect(g); g.connect(ctx.destination);
+    o.type = 'sine'; o.frequency.value = 880;
+    g.gain.setValueAtTime(0.0001, ctx.currentTime);
+    g.gain.exponentialRampToValueAtTime(0.35, ctx.currentTime + 0.02);
+    g.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + 0.45);
+    o.start();
+    o.stop(ctx.currentTime + 0.46);
+    setTimeout(() => { try { ctx.close(); } catch { /* noop */ } }, 800);
+  } catch { /* noop */ }
+}
+
 export function SessionScreen({ today, onClose, onFinish }) {
   const ex0 = today.exercises;
   const [sets, setSets] = React.useState(() =>
     ex0.map(ex => Array.from({ length: ex.sets }, () => ({ reps: ex.reps, weight: ex.weight, done: false })))
   );
   const [resting, setResting] = React.useState(false);
-  const [restLeft, setRestLeft] = React.useState(0);
-  const [restDur, setRestDur] = React.useState(60);
+  const [restDur, setRestDur] = React.useState(60);   // total rest (s) for the ring fraction
+  const [restEnd, setRestEnd] = React.useState(0);     // wall-clock end time (ms)
+  const [nowTs, setNowTs] = React.useState(0);         // re-rendered each tick
   const [finished, setFinished] = React.useState(false);
   const [startTime] = React.useState(Date.now());
+
+  // Remaining seconds derived from the absolute end time — survives the phone
+  // locking / the tab being backgrounded (timers get throttled, wall clock doesn't).
+  const restLeft = resting ? Math.max(0, Math.ceil((restEnd - nowTs) / 1000)) : 0;
 
   // derive active position
   let activeEx = -1, activeSet = -1;
@@ -23,13 +47,33 @@ export function SessionScreen({ today, onClose, onFinish }) {
   const totalSets = sets.reduce((a, s) => a + s.length, 0);
   const doneSets = sets.reduce((a, s) => a + s.filter(x => x.done).length, 0);
 
-  // rest countdown
+  // Rest countdown driven by the wall clock. Re-sync immediately when the tab
+  // becomes visible again (after unlocking the phone) so the timer reflects the
+  // real elapsed time instead of a throttled, frozen value.
   React.useEffect(() => {
     if (!resting) return;
-    if (restLeft <= 0) { setResting(false); return; }
-    const t = setTimeout(() => setRestLeft(v => v - 1), 1000);
-    return () => clearTimeout(t);
-  }, [resting, restLeft]);
+    let done = false;
+    const tick = () => {
+      const t = Date.now();
+      setNowTs(t);
+      if (!done && t >= restEnd) {
+        done = true;
+        setResting(false);
+        try { navigator.vibrate && navigator.vibrate([180, 80, 180]); } catch { /* noop */ }
+        playBeep();
+      }
+    };
+    const id = setInterval(tick, 400);
+    const onVisible = () => tick();
+    document.addEventListener('visibilitychange', onVisible);
+    window.addEventListener('focus', onVisible);
+    tick();
+    return () => {
+      clearInterval(id);
+      document.removeEventListener('visibilitychange', onVisible);
+      window.removeEventListener('focus', onVisible);
+    };
+  }, [resting, restEnd]);
 
   const setField = (exi, seti, field, val) => {
     setSets(prev => prev.map((s, i) => i !== exi ? s : s.map((x, j) => j !== seti ? x : { ...x, [field]: Math.max(0, val) })));
@@ -42,7 +86,8 @@ export function SessionScreen({ today, onClose, onFinish }) {
     const stillLeft = next.some(s => s.some(x => !x.done));
     if (!stillLeft) { setFinished(true); return; }
     const dur = ex0[exi].rest;
-    setRestDur(dur); setRestLeft(dur); setResting(true);
+    const t = Date.now();
+    setRestDur(dur); setRestEnd(t + dur * 1000); setNowTs(t); setResting(true);
   };
 
   if (finished) return <FinishView today={today} sets={sets} startTime={startTime} onFinish={onFinish} />;
@@ -134,7 +179,7 @@ export function SessionScreen({ today, onClose, onFinish }) {
       {/* rest overlay */}
       {resting && <RestOverlay left={restLeft} dur={restDur} nextLabel={nextLabel}
         onSkip={() => setResting(false)}
-        onAdd={() => { setRestLeft(v => v + 15); setRestDur(d => d + 15); }} />}
+        onAdd={() => { setRestEnd(e => e + 15000); setRestDur(d => d + 15); }} />}
     </div>
   );
 }

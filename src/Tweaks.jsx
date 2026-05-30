@@ -8,22 +8,23 @@ export function Tweaks({ accent, setAccent, reduceMotion, setReduceMotion }) {
 
   return (
     <>
-      {/* trigger */}
+      {/* trigger — top center */}
       <button onClick={() => setOpen((o) => !o)} aria-label="Réglages"
         style={{
-          position: 'fixed', right: 16, bottom: 16, zIndex: 2147483646,
-          width: 44, height: 44, borderRadius: 14, border: 'none', cursor: 'pointer',
-          background: 'rgba(20,32,25,.9)', color: '#fff', display: 'flex',
+          position: 'fixed', top: 'calc(8px + env(safe-area-inset-top))', left: '50%', transform: 'translateX(-50%)',
+          zIndex: 2147483646, width: 40, height: 40, borderRadius: 13, border: 'none', cursor: 'pointer',
+          background: 'rgba(20,32,25,.88)', color: '#fff', display: 'flex',
           alignItems: 'center', justifyContent: 'center',
-          boxShadow: '0 8px 24px rgba(0,0,0,.28)', backdropFilter: 'blur(8px)',
+          boxShadow: '0 6px 20px rgba(0,0,0,.26)', backdropFilter: 'blur(8px)',
         }}>
-        <Icon name="settings" size={22} color="#fff" sw={2.1} />
+        <Icon name="settings" size={21} color="#fff" sw={2.1} />
       </button>
 
       {open && (
         <div style={{
-          position: 'fixed', right: 16, bottom: 70, zIndex: 2147483646, width: 240,
-          background: 'rgba(250,252,251,.92)', color: '#16231C', borderRadius: 16,
+          position: 'fixed', top: 'calc(56px + env(safe-area-inset-top))', left: '50%', transform: 'translateX(-50%)',
+          zIndex: 2147483646, width: 260, maxWidth: 'calc(100vw - 24px)',
+          background: 'rgba(250,252,251,.94)', color: '#16231C', borderRadius: 16,
           border: '.5px solid rgba(255,255,255,.6)', padding: '14px 16px 16px',
           boxShadow: '0 14px 44px rgba(0,0,0,.22)', backdropFilter: 'blur(20px) saturate(160%)',
           fontFamily: "'Plus Jakarta Sans', system-ui, sans-serif",
