@@ -1,6 +1,6 @@
 /* screens/Nutrition.jsx */
 import React from 'react';
-import { T, Icon, MacroBar, SectionTitle, Sheet } from '../theme.jsx';
+import { T, Icon, Ring, MacroBar, SectionTitle, Sheet } from '../theme.jsx';
 
 export function NutritionScreen({ kcalGoal, macroGoal }) {
   const [meals, setMeals] = React.useState(() => ([

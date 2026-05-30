@@ -1,8 +1,12 @@
-/* screens/Progress.jsx — photo tracking + real Claude AI analysis */
+/* screens/Progress.jsx — photo tracking + editable measurements + real Claude AI analysis */
 import React from 'react';
 import { T, Icon, Chip, SectionTitle, Sheet } from '../theme.jsx';
 import { ImageSlot } from '../ImageSlot.jsx';
 import { getPhoto, subscribe } from '../photoStore.js';
+import {
+  getProfile, subscribeProfile, setField, delta, fmt, fmtDelta,
+  BASELINE, GOALS, FIELDS,
+} from '../profileStore.js';
 
 const DEFAULT_CHANGES = [
   { type: 'add', title: 'Soulevé de terre roumain', sub: 'Ajouté · Jeudi jambes · 4 × 10' },
@@ -26,19 +30,16 @@ export function ProgressScreen() {
   const [tab, setTab] = React.useState('photos');
   const [angle, setAngle] = React.useState('face');
   const [aiOpen, setAiOpen] = React.useState(false);
+  const [editor, setEditor] = React.useState(false);
   const [toast, setToast] = React.useState(false);
   const [, bump] = React.useReducer((x) => x + 1, 0);
 
-  // AI analysis state
-  const [ai, setAi] = React.useState({
-    status: 'idle',
-    summary: null,
-    changes: DEFAULT_CHANGES,
-    error: null,
-  });
+  const [ai, setAi] = React.useState({ status: 'idle', summary: null, changes: DEFAULT_CHANGES, error: null });
 
   React.useEffect(() => subscribe(bump), []);
+  React.useEffect(() => subscribeProfile(bump), []);
 
+  const p = getProfile();
   const angles = [{ k: 'face', l: 'Face' }, { k: 'side', l: 'Côté' }, { k: 'back', l: 'Dos' }];
 
   const runAnalysis = async () => {
@@ -59,11 +60,12 @@ export function ProgressScreen() {
         body: JSON.stringify({
           photos,
           context: {
-            goal: 'Prise de masse',
-            weightKg: 78.4,
-            weightDeltaKg: -2.1,
+            goal: p.goal,
+            weightKg: p.weight,
+            weightDeltaKg: delta('weight'),
             weeks: 5,
-            measurements: { poitrine: 104, bras: 38.5, taille: 82, cuisse: 60 },
+            measurements_cm: { poitrine: p.poitrine, tour_de_bras: p.bras, taille: p.taille, cuisse: p.cuisse },
+            measurement_deltas_cm: { poitrine: delta('poitrine'), tour_de_bras: delta('bras'), taille: delta('taille'), cuisse: delta('cuisse') },
             program: 'Pecs/Tri · Dos/Bi · Jambes · Épaules (4 séances/semaine)',
           },
         }),
@@ -119,7 +121,7 @@ export function ProgressScreen() {
               <p style={{ margin: 0, fontSize: 15.5, lineHeight: 1.5, fontWeight: 600, color: 'rgba(255,255,255,.92)' }}>{ai.summary}</p>
             ) : (
               <p style={{ margin: 0, fontSize: 15.5, lineHeight: 1.5, fontWeight: 600, color: 'rgba(255,255,255,.92)' }}>
-                Ajoute tes photos face · côté · dos ci-dessous, puis lance l'analyse : Claude évalue ton évolution et te propose un programme ajusté.
+                Ajoute tes photos face · côté · dos et renseigne tes mensurations, puis lance l'analyse : Claude évalue ton évolution et adapte ton programme.
               </p>
             )}
 
@@ -127,7 +129,17 @@ export function ProgressScreen() {
               <p style={{ margin: '12px 0 0', fontSize: 13, fontWeight: 700, color: '#FFB7C2' }}>{ai.error}</p>
             )}
 
-            <div style={{ display: 'flex', gap: 10, marginTop: 16 }}>
+            {/* mensurations entry point — relie les mensurations au programme */}
+            <div onClick={() => setEditor(true)} className="presslite" style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 14, padding: '10px 12px', borderRadius: 14, background: 'rgba(255,255,255,.08)', cursor: 'pointer' }}>
+              <Icon name="target" size={17} color="#B6BCFF" sw={2.3} />
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ fontSize: 12.5, fontWeight: 800 }}>{p.goal} · {fmt(p.weight)} kg</div>
+                <div style={{ fontSize: 11, fontWeight: 600, color: 'rgba(255,255,255,.55)' }}>Mensurations utilisées pour adapter le programme</div>
+              </div>
+              <Icon name="chevR" size={16} color="rgba(255,255,255,.6)" sw={2.4} />
+            </div>
+
+            <div style={{ display: 'flex', gap: 10, marginTop: 12 }}>
               <button onClick={runAnalysis} disabled={ai.status === 'loading'} className="press" style={{ flex: 1, border: 'none', cursor: ai.status === 'loading' ? 'default' : 'pointer', padding: '14px', borderRadius: 999, background: ai.status === 'loading' ? 'rgba(255,255,255,.14)' : T.mint, color: ai.status === 'loading' ? 'rgba(255,255,255,.7)' : '#08231A', fontSize: 14.5, fontWeight: 800, fontFamily: T.font, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
                 <Icon name="sparkle" size={17} color={ai.status === 'loading' ? 'rgba(255,255,255,.7)' : '#08231A'} sw={2.4}/>
                 {ai.status === 'done' ? 'Relancer l’analyse' : ai.status === 'loading' ? 'Analyse…' : 'Lancer l’analyse IA'}
@@ -152,12 +164,12 @@ export function ProgressScreen() {
               </div>
             </div>
             <div style={{ display: 'flex', gap: 12, alignItems: 'stretch' }}>
-              <PhotoCol id={'cmp-before-' + angle} date="1er mars" weight="80,5 kg" tag="Avant" tagBg="#EEF2F0" tagColor={T.ink2} />
-              <PhotoCol id={'cmp-now-' + angle} date="Aujourd'hui" weight="78,4 kg" tag="Maintenant" tagBg={T.mintSoft} tagColor={T.mintDk} live />
+              <PhotoCol id={'cmp-before-' + angle} date="1er mars" weight={fmt(BASELINE.weight) + ' kg'} tag="Avant" tagBg="#EEF2F0" tagColor={T.ink2} />
+              <PhotoCol id={'cmp-now-' + angle} date="Aujourd'hui" weight={fmt(p.weight) + ' kg'} tag="Maintenant" tagBg={T.mintSoft} tagColor={T.mintDk} live />
             </div>
             <div style={{ display: 'flex', justifyContent: 'center', marginTop: 12 }}>
               <span style={{ display: 'inline-flex', alignItems: 'center', gap: 7, padding: '9px 16px', borderRadius: 999, background: '#fff', boxShadow: T.shadow, fontSize: 13.5, fontWeight: 800 }}>
-                <Icon name="arrowD" size={16} color={T.mintDk} sw={2.6}/> −2,1 kg <span style={{ color: T.ink3, fontWeight: 700 }}>· 5 semaines</span>
+                <Icon name={delta('weight') <= 0 ? 'arrowD' : 'arrowU'} size={16} color={T.mintDk} sw={2.6}/> {fmtDelta(delta('weight'))} kg <span style={{ color: T.ink3, fontWeight: 700 }}>· 5 semaines</span>
               </span>
             </div>
           </div>
@@ -166,7 +178,7 @@ export function ProgressScreen() {
           <div style={{ marginTop: 24 }}>
             <SectionTitle action="Tout voir">Historique</SectionTitle>
             <div className="app-scroll" style={{ display: 'flex', gap: 10, overflowX: 'auto', margin: '0 -18px', padding: '0 18px 4px' }}>
-              {[['1 mars', '80,5'], ['1 avr.', '79,6'], ['1 mai', '78,9'], ['30 mai', '78,4']].map(([d, w], i) => (
+              {[['1 mars', fmt(BASELINE.weight)], ['1 avr.', '79,6'], ['1 mai', '78,9'], ['30 mai', fmt(p.weight)]].map(([d, w], i) => (
                 <div key={i} className="presslite" style={{ flexShrink: 0, width: 92 }}>
                   <div style={{ borderRadius: 16, overflow: 'hidden', background: '#E9EEEB', boxShadow: T.shadow }}>
                     <ImageSlot id={'tl-' + i} shape="rounded" radius={16} style={{ width: 92, height: 116 }} placeholder="+" />
@@ -179,12 +191,15 @@ export function ProgressScreen() {
           </div>
         </>
       ) : (
-        <StatsTab />
+        <StatsTab profile={p} onEdit={() => setEditor(true)} />
       )}
+
+      {/* measurements editor */}
+      <MeasureEditor open={editor} onClose={() => setEditor(false)} profile={p} />
 
       {/* AI program sheet */}
       <Sheet open={aiOpen} onClose={() => setAiOpen(false)} title="Programme ajusté par l'IA">
-        <p style={{ margin: '0 2px 16px', fontSize: 13.5, lineHeight: 1.5, color: T.ink2, fontWeight: 600 }}>Basé sur tes photos, ton poids et ton volume d'entraînement.</p>
+        <p style={{ margin: '0 2px 16px', fontSize: 13.5, lineHeight: 1.5, color: T.ink2, fontWeight: 600 }}>Basé sur tes photos, ton poids et tes mensurations.</p>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
           {ai.changes.map((ch, i) => <ChangeRow key={i} type={ch.type} title={ch.title} sub={ch.sub} />)}
         </div>
@@ -238,11 +253,14 @@ function ChangeRow({ type, title, sub }) {
   );
 }
 
-function StatsTab() {
-  const weights = [80.5, 80.2, 79.7, 79.6, 79.1, 78.9, 78.6, 78.4];
-  const min = 78, max = 81, W = 340, H = 120;
-  const pts = weights.map((w, i) => [16 + (i / (weights.length - 1)) * (W - 32), H - 12 - ((w - min) / (max - min)) * (H - 30)]);
-  const line = pts.map((p, i) => (i ? 'L' : 'M') + p[0].toFixed(1) + ' ' + p[1].toFixed(1)).join(' ');
+function StatsTab({ profile, onEdit }) {
+  const history = [80.5, 80.2, 79.7, 79.6, 79.1, 78.9, 78.6];
+  const weights = [...history, profile.weight];
+  const lo = Math.floor(Math.min(...weights) - 0.6);
+  const hi = Math.ceil(Math.max(...weights) + 0.6);
+  const W = 340, H = 120;
+  const pts = weights.map((w, i) => [16 + (i / (weights.length - 1)) * (W - 32), H - 12 - ((w - lo) / (hi - lo)) * (H - 30)]);
+  const line = pts.map((pt, i) => (i ? 'L' : 'M') + pt[0].toFixed(1) + ' ' + pt[1].toFixed(1)).join(' ');
   const area = line + ` L${pts[pts.length-1][0].toFixed(1)} ${H} L${pts[0][0].toFixed(1)} ${H} Z`;
   return (
     <>
@@ -250,9 +268,9 @@ function StatsTab() {
         <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', marginBottom: 8 }}>
           <div>
             <div style={{ fontSize: 13, fontWeight: 700, color: T.ink3 }}>Poids actuel</div>
-            <div style={{ fontFamily: T.mono, fontSize: 30, fontWeight: 700, letterSpacing: -0.5 }}>78,4 <span style={{ fontSize: 16, color: T.ink3 }}>kg</span></div>
+            <div style={{ fontFamily: T.mono, fontSize: 30, fontWeight: 700, letterSpacing: -0.5 }}>{fmt(profile.weight)} <span style={{ fontSize: 16, color: T.ink3 }}>kg</span></div>
           </div>
-          <Chip icon="arrowD" bg={T.mintSoft} color={T.mintDk}>−2,1 kg</Chip>
+          <Chip icon={delta('weight') <= 0 ? 'arrowD' : 'arrowU'} bg={T.mintSoft} color={T.mintDk}>{fmtDelta(delta('weight'))} kg</Chip>
         </div>
         <svg viewBox={`0 0 ${W} ${H}`} style={{ width: '100%', height: 120, display: 'block' }}>
           <defs>
@@ -263,8 +281,8 @@ function StatsTab() {
           </defs>
           <path d={area} fill="url(#wg)" />
           <path d={line} fill="none" stroke={T.mint} strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
-          {pts.map((p, i) => i === pts.length - 1 && (
-            <circle key={i} cx={p[0]} cy={p[1]} r="5" fill={T.mint} stroke="#fff" strokeWidth="2.5" />
+          {pts.map((pt, i) => i === pts.length - 1 && (
+            <circle key={i} cx={pt[0]} cy={pt[1]} r="5" fill={T.mint} stroke="#fff" strokeWidth="2.5" />
           ))}
         </svg>
         <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 4, fontSize: 11, fontWeight: 700, color: T.ink3 }}>
@@ -273,19 +291,22 @@ function StatsTab() {
       </div>
 
       <div style={{ marginTop: 22 }}>
-        <SectionTitle>Mensurations</SectionTitle>
+        <SectionTitle action="Modifier" onAction={onEdit}>Mensurations</SectionTitle>
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
-          <Measure label="Poitrine" value="104" delta="+1,5" up />
-          <Measure label="Tour de bras" value="38,5" delta="+1,2" up />
-          <Measure label="Taille" value="82" delta="−3,0" />
-          <Measure label="Cuisse" value="60" delta="+0,8" up />
+          {FIELDS.map((f) => {
+            const d = delta(f.key);
+            return <Measure key={f.key} label={f.label} value={fmt(profile[f.key])} delta={fmtDelta(d)} up={d >= 0} />;
+          })}
         </div>
+        <button onClick={onEdit} className="press" style={{ width: '100%', marginTop: 14, border: 'none', cursor: 'pointer', padding: '14px', borderRadius: 999, background: T.ink, color: '#fff', fontSize: 14.5, fontWeight: 800, fontFamily: T.font, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
+          <Icon name="plus" size={18} color="#fff" sw={2.6}/> Mettre à jour mes mensurations
+        </button>
       </div>
     </>
   );
 }
 
-function Measure({ label, value, delta, up }) {
+function Measure({ label, value, delta: d, up }) {
   return (
     <div style={{ background: '#fff', borderRadius: 20, padding: '15px 16px', boxShadow: T.shadow }}>
       <div style={{ fontSize: 12.5, fontWeight: 700, color: T.ink3 }}>{label}</div>
@@ -294,8 +315,59 @@ function Measure({ label, value, delta, up }) {
         <span style={{ fontSize: 12, fontWeight: 700, color: T.ink3 }}>cm</span>
       </div>
       <span style={{ display: 'inline-flex', alignItems: 'center', gap: 3, marginTop: 8, fontSize: 12, fontWeight: 800, color: up ? T.mintDk : T.indigo }}>
-        <Icon name={up ? 'arrowU' : 'arrowD'} size={14} sw={2.8} /> {delta} cm
+        <Icon name={up ? 'arrowU' : 'arrowD'} size={14} sw={2.8} /> {d} cm
       </span>
+    </div>
+  );
+}
+
+function MeasureEditor({ open, onClose, profile }) {
+  const rows = [{ key: 'weight', label: 'Poids', unit: 'kg', step: 0.1 }, ...FIELDS];
+  return (
+    <Sheet open={open} onClose={onClose} title="Mes mensurations">
+      <p style={{ margin: '0 2px 14px', fontSize: 13, lineHeight: 1.5, color: T.ink2, fontWeight: 600 }}>
+        Tiens-les à jour : l'IA s'en sert pour adapter ton programme.
+      </p>
+
+      <div style={{ fontSize: 12, fontWeight: 800, color: T.ink3, textTransform: 'uppercase', letterSpacing: .4, margin: '0 2px 8px' }}>Objectif</div>
+      <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginBottom: 16 }}>
+        {GOALS.map((g) => {
+          const on = profile.goal === g;
+          return (
+            <div key={g} onClick={() => setField('goal', g)} className="presslite" style={{ padding: '9px 14px', borderRadius: 999, fontSize: 13, fontWeight: 800, cursor: 'pointer',
+              background: on ? T.ink : '#F1F4F2', color: on ? '#fff' : T.ink2 }}>{g}</div>
+          );
+        })}
+      </div>
+
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+        {rows.map((f) => (
+          <NumberRow key={f.key} label={f.label} unit={f.unit} value={profile[f.key]} step={f.step}
+            onChange={(v) => setField(f.key, Math.max(0, Math.round(v * 10) / 10))} />
+        ))}
+      </div>
+
+      <button onClick={onClose} className="press" style={{ width: '100%', marginTop: 18, border: 'none', cursor: 'pointer', padding: '16px', borderRadius: 999, background: T.mint, color: '#08231A', fontSize: 15.5, fontWeight: 800, fontFamily: T.font, boxShadow: T.glow }}>
+        Enregistrer
+      </button>
+    </Sheet>
+  );
+}
+
+function NumberRow({ label, unit, value, step, onChange }) {
+  const btn = (icon, fn) => (
+    <div onClick={fn} className="presslite" style={{ width: 38, height: 38, borderRadius: 12, background: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', boxShadow: T.shadow }}>
+      <Icon name={icon} size={19} color={T.ink} sw={2.6} />
+    </div>
+  );
+  return (
+    <div style={{ display: 'flex', alignItems: 'center', gap: 12, background: '#F7F9F8', borderRadius: 16, padding: '10px 12px' }}>
+      <span style={{ flex: 1, fontSize: 14.5, fontWeight: 700, color: T.ink }}>{label}</span>
+      {btn('minus', () => onChange(value - step))}
+      <span style={{ fontFamily: T.mono, fontSize: 20, fontWeight: 700, minWidth: 58, textAlign: 'center' }}>
+        {fmt(value)}<span style={{ fontSize: 12, color: T.ink3, fontWeight: 700 }}> {unit}</span>
+      </span>
+      {btn('plus', () => onChange(value + step))}
     </div>
   );
 }
