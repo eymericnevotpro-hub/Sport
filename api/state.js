@@ -8,7 +8,8 @@ const PATH = 'state.json';
 const token = process.env.BLOB_READ_WRITE_TOKEN;
 
 async function readState() {
-  const result = await get(PATH, { access: 'private', token });
+  // useCache:false → read straight from origin so we never serve a stale write.
+  const result = await get(PATH, { access: 'private', token, useCache: false });
   if (!result || result.statusCode !== 200 || !result.stream) return {};
   return await new Response(result.stream).json().catch(() => ({}));
 }
@@ -31,6 +32,7 @@ export default async function handler(req, res) {
         allowOverwrite: true,
         addRandomSuffix: false,
         contentType: 'application/json',
+        cacheControlMaxAge: 60, // minimum allowed; reads use useCache:false anyway
       });
       res.status(200).json({ ok: true });
       return;
