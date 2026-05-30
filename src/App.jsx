@@ -1,4 +1,4 @@
-/* App.jsx — data, routing, bottom nav, device stage + scaling */
+/* App.jsx — routing, bottom nav, program-driven today, full-screen shell */
 import React from 'react';
 import { T, Icon } from './theme.jsx';
 import { HomeScreen } from './screens/Home.jsx';
@@ -7,22 +7,11 @@ import { SessionScreen } from './screens/Session.jsx';
 import { NutritionScreen } from './screens/Nutrition.jsx';
 import { ProgressScreen } from './screens/Progress.jsx';
 import { Tweaks } from './Tweaks.jsx';
+import { getProgramId, subscribeProgram } from './programStore.js';
+import { getProgramById, todayIndex, dayForSlot } from './programs.js';
 
-const TODAY = {
-  title: 'Pecs & Triceps',
-  duration: 45,
-  kcal: 430,
-  exercises: [
-    { name: 'Développé couché', sets: 4, reps: 12, weight: 24, rest: 90, gif: '/gif/developpe-couche.gif' },
-    { name: 'Écarté incliné', sets: 3, reps: 15, weight: 12, rest: 75, gif: '/gif/ecarte-incline.gif' },
-    { name: 'Développé incliné', sets: 4, reps: 10, weight: 28, rest: 90, gif: '/gif/developpe-incline.gif' },
-    { name: 'Dips lestés', sets: 3, reps: 12, weight: 10, rest: 75, gif: '/gif/dips.gif' },
-    { name: 'Extension triceps poulie', sets: 3, reps: 15, weight: 25, rest: 60, gif: '/gif/extension-triceps.gif' },
-    { name: 'Développé couché serré', sets: 3, reps: 12, weight: 20, rest: 60, gif: '/gif/developpe-serre.gif' },
-  ],
-};
-const NUTRITION = { kcal: 1440, kcalGoal: 2200, p: 145, pGoal: 160, c: 150, cGoal: 220, f: 30, fGoal: 70 };
-const MACRO_GOAL = { p: 160, c: 220, f: 70 };
+// Nutrition goals (targets); consumed values start at 0 — user logs his own.
+const NUTRITION_GOAL = { kcalGoal: 2200, p: 160, c: 220, f: 70 };
 
 const NAV = [
   { k: 'home', l: 'Accueil', icon: 'home' },
@@ -33,13 +22,23 @@ const NAV = [
 
 function Phone({ accent }) {
   const [tab, setTab] = React.useState('home');
-  const [session, setSession] = React.useState(false);
+  const [sessionDay, setSessionDay] = React.useState(null);
+  const [, bump] = React.useReducer((x) => x + 1, 0);
+
+  React.useEffect(() => subscribeProgram(bump), []);
+
+  const program = getProgramById(getProgramId());
+  const tIdx = todayIndex();
+  const todayDay = dayForSlot(program, tIdx);
+
+  const openSession = (day) => { if (day) { setSessionDay(day); } };
 
   const screen = () => {
     switch (tab) {
-      case 'home': return <HomeScreen user="Brick" streak={12} today={TODAY} nutrition={NUTRITION} nav={setTab} openSession={() => setSession(true)} />;
-      case 'program': return <ProgramScreen today={TODAY} openSession={() => setSession(true)} />;
-      case 'nutrition': return <NutritionScreen kcalGoal={NUTRITION.kcalGoal} macroGoal={MACRO_GOAL} />;
+      case 'home': return <HomeScreen user="Brick" today={todayDay} nutritionGoal={NUTRITION_GOAL}
+        nav={setTab} openToday={() => openSession(todayDay)} goProgram={() => setTab('program')} />;
+      case 'program': return <ProgramScreen openSession={openSession} />;
+      case 'nutrition': return <NutritionScreen goal={NUTRITION_GOAL} />;
       case 'progress': return <ProgressScreen />;
       default: return null;
     }
@@ -66,9 +65,9 @@ function Phone({ accent }) {
         })}
       </div>
 
-      {session && (
-        <SessionScreen today={TODAY} onClose={() => setSession(false)}
-          onFinish={(dest) => { setSession(false); if (dest === 'progress') setTab('progress'); }} />
+      {sessionDay && (
+        <SessionScreen today={sessionDay} onClose={() => setSessionDay(null)}
+          onFinish={(dest) => { setSessionDay(null); if (dest === 'progress') setTab('progress'); }} />
       )}
     </div>
   );

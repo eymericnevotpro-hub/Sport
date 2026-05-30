@@ -2,25 +2,17 @@
 import React from 'react';
 import { T, Icon, Ring, MacroBar, SectionTitle, Sheet } from '../theme.jsx';
 
-export function NutritionScreen({ kcalGoal, macroGoal }) {
+export function NutritionScreen({ goal }) {
+  const kcalGoal = goal.kcalGoal;
+  const macroGoal = { p: goal.p, c: goal.c, f: goal.f };
   const [meals, setMeals] = React.useState(() => ([
-    { id: 'b', name: 'Petit-déjeuner', icon: 'moon', items: [
-      { name: "Flocons d'avoine + banane", kcal: 320, p: 12, c: 58, f: 6 },
-      { name: 'Whey vanille', kcal: 200, p: 40, c: 6, f: 3 },
-    ] },
-    { id: 'l', name: 'Déjeuner', icon: 'fork', items: [
-      { name: 'Poulet grillé 180g', kcal: 300, p: 56, c: 0, f: 8 },
-      { name: 'Riz basmati 150g', kcal: 280, p: 6, c: 60, f: 1 },
-      { name: 'Brocoli vapeur', kcal: 100, p: 6, c: 14, f: 1 },
-    ] },
-    { id: 's', name: 'Collation', icon: 'bolt', items: [
-      { name: 'Skyr nature', kcal: 120, p: 20, c: 8, f: 0 },
-      { name: 'Amandes 20g', kcal: 120, p: 5, c: 4, f: 11 },
-    ] },
+    { id: 'b', name: 'Petit-déjeuner', icon: 'moon', items: [] },
+    { id: 'l', name: 'Déjeuner', icon: 'fork', items: [] },
+    { id: 's', name: 'Collation', icon: 'bolt', items: [] },
     { id: 'd', name: 'Dîner', icon: 'fork', items: [] },
   ]));
   const [sheet, setSheet] = React.useState(null); // meal id
-  const [water, setWater] = React.useState(5);
+  const [water, setWater] = React.useState(0);
 
   const sum = (f) => meals.reduce((a, m) => a + m.items.reduce((b, it) => b + it[f], 0), 0);
   const kcal = sum('kcal'), p = sum('p'), c = sum('c'), f = sum('f');

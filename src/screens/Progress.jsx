@@ -5,8 +5,10 @@ import { ImageSlot } from '../ImageSlot.jsx';
 import { getPhoto, subscribe } from '../photoStore.js';
 import {
   getProfile, subscribeProfile, setField, delta, fmt, fmtDelta,
-  BASELINE, GOALS, FIELDS, HEIGHT_FIELD,
+  getBaseline, GOALS, FIELDS, HEIGHT_FIELD,
 } from '../profileStore.js';
+import { getProgramId } from '../programStore.js';
+import { getProgramById } from '../programs.js';
 
 const DEFAULT_CHANGES = [
   { type: 'add', title: 'Soulevé de terre roumain', sub: 'Ajouté · Jeudi jambes · 4 × 10' },
@@ -69,7 +71,7 @@ export function ProgressScreen() {
             weeks: 5,
             measurements_cm: { poitrine: p.poitrine, tour_de_bras: p.bras, tour_de_taille: p.taille, cuisse: p.cuisse },
             measurement_deltas_cm: { poitrine: delta('poitrine'), tour_de_bras: delta('bras'), taille: delta('taille'), cuisse: delta('cuisse') },
-            program: 'Pecs/Tri · Dos/Bi · Jambes · Épaules (4 séances/semaine)',
+            program: (() => { const pr = getProgramById(getProgramId()); return `${pr.name} (${pr.sub})`; })(),
           },
         }),
       });
@@ -167,13 +169,19 @@ export function ProgressScreen() {
               </div>
             </div>
             <div style={{ display: 'flex', gap: 12, alignItems: 'stretch' }}>
-              <PhotoCol id={'cmp-before-' + angle} date="1er mars" weight={fmt(BASELINE.weight) + ' kg'} tag="Avant" tagBg="#EEF2F0" tagColor={T.ink2} />
-              <PhotoCol id={'cmp-now-' + angle} date="Aujourd'hui" weight={fmt(p.weight) + ' kg'} tag="Maintenant" tagBg={T.mintSoft} tagColor={T.mintDk} live />
+              <PhotoCol id={'cmp-before-' + angle} date="Avant" weight={getBaseline('weight') ? fmt(getBaseline('weight')) + ' kg' : '—'} tag="Avant" tagBg="#EEF2F0" tagColor={T.ink2} />
+              <PhotoCol id={'cmp-now-' + angle} date="Aujourd'hui" weight={p.weight ? fmt(p.weight) + ' kg' : 'à renseigner'} tag="Maintenant" tagBg={T.mintSoft} tagColor={T.mintDk} live />
             </div>
             <div style={{ display: 'flex', justifyContent: 'center', marginTop: 12 }}>
-              <span style={{ display: 'inline-flex', alignItems: 'center', gap: 7, padding: '9px 16px', borderRadius: 999, background: '#fff', boxShadow: T.shadow, fontSize: 13.5, fontWeight: 800 }}>
-                <Icon name={delta('weight') <= 0 ? 'arrowD' : 'arrowU'} size={16} color={T.mintDk} sw={2.6}/> {fmtDelta(delta('weight'))} kg <span style={{ color: T.ink3, fontWeight: 700 }}>· 5 semaines</span>
-              </span>
+              {delta('weight') !== 0 ? (
+                <span style={{ display: 'inline-flex', alignItems: 'center', gap: 7, padding: '9px 16px', borderRadius: 999, background: '#fff', boxShadow: T.shadow, fontSize: 13.5, fontWeight: 800 }}>
+                  <Icon name={delta('weight') <= 0 ? 'arrowD' : 'arrowU'} size={16} color={T.mintDk} sw={2.6}/> {fmtDelta(delta('weight'))} kg <span style={{ color: T.ink3, fontWeight: 700 }}>depuis le début</span>
+                </span>
+              ) : (
+                <span style={{ display: 'inline-flex', alignItems: 'center', gap: 7, padding: '9px 16px', borderRadius: 999, background: '#fff', boxShadow: T.shadow, fontSize: 13, fontWeight: 700, color: T.ink3 }}>
+                  <Icon name="info" size={15} color={T.ink3} sw={2.4}/> Renseigne ton poids pour suivre l'évolution
+                </span>
+              )}
             </div>
           </div>
 
@@ -181,13 +189,12 @@ export function ProgressScreen() {
           <div style={{ marginTop: 24 }}>
             <SectionTitle action="Tout voir">Historique</SectionTitle>
             <div className="app-scroll" style={{ display: 'flex', gap: 10, overflowX: 'auto', margin: '0 -18px', padding: '0 18px 4px' }}>
-              {[['1 mars', fmt(BASELINE.weight)], ['1 avr.', '79,6'], ['1 mai', '78,9'], ['30 mai', fmt(p.weight)]].map(([d, w], i) => (
+              {['Photo 1', 'Photo 2', 'Photo 3', 'Photo 4'].map((d, i) => (
                 <div key={i} className="presslite" style={{ flexShrink: 0, width: 92 }}>
                   <div style={{ borderRadius: 16, overflow: 'hidden', background: '#E9EEEB', boxShadow: T.shadow }}>
                     <ImageSlot id={'tl-' + i} shape="rounded" radius={16} style={{ width: 92, height: 116 }} placeholder="+" />
                   </div>
                   <div style={{ fontSize: 12, fontWeight: 800, marginTop: 7 }}>{d}</div>
-                  <div style={{ fontSize: 11, fontWeight: 700, color: T.ink3 }}>{w} kg</div>
                 </div>
               ))}
             </div>
@@ -257,40 +264,28 @@ function ChangeRow({ type, title, sub }) {
 }
 
 function StatsTab({ profile, onEdit }) {
-  const history = [80.5, 80.2, 79.7, 79.6, 79.1, 78.9, 78.6];
-  const weights = [...history, profile.weight];
-  const lo = Math.floor(Math.min(...weights) - 0.6);
-  const hi = Math.ceil(Math.max(...weights) + 0.6);
-  const W = 340, H = 120;
-  const pts = weights.map((w, i) => [16 + (i / (weights.length - 1)) * (W - 32), H - 12 - ((w - lo) / (hi - lo)) * (H - 30)]);
-  const line = pts.map((pt, i) => (i ? 'L' : 'M') + pt[0].toFixed(1) + ' ' + pt[1].toFixed(1)).join(' ');
-  const area = line + ` L${pts[pts.length-1][0].toFixed(1)} ${H} L${pts[0][0].toFixed(1)} ${H} Z`;
+  const wd = delta('weight');
+  const base = getBaseline('weight');
   return (
     <>
       <div style={{ background: '#fff', borderRadius: T.rCard, padding: 20, boxShadow: T.shadow }}>
-        <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', marginBottom: 8 }}>
+        <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', marginBottom: 4 }}>
           <div>
             <div style={{ fontSize: 13, fontWeight: 700, color: T.ink3 }}>Poids actuel</div>
-            <div style={{ fontFamily: T.mono, fontSize: 30, fontWeight: 700, letterSpacing: -0.5 }}>{fmt(profile.weight)} <span style={{ fontSize: 16, color: T.ink3 }}>kg</span></div>
+            <div style={{ fontFamily: T.mono, fontSize: 30, fontWeight: 700, letterSpacing: -0.5 }}>{profile.weight ? fmt(profile.weight) : '—'} <span style={{ fontSize: 16, color: T.ink3 }}>kg</span></div>
           </div>
-          <Chip icon={delta('weight') <= 0 ? 'arrowD' : 'arrowU'} bg={T.mintSoft} color={T.mintDk}>{fmtDelta(delta('weight'))} kg</Chip>
+          {wd !== 0 && <Chip icon={wd <= 0 ? 'arrowD' : 'arrowU'} bg={T.mintSoft} color={T.mintDk}>{fmtDelta(wd)} kg</Chip>}
         </div>
-        <svg viewBox={`0 0 ${W} ${H}`} style={{ width: '100%', height: 120, display: 'block' }}>
-          <defs>
-            <linearGradient id="wg" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0%" stopColor={T.mint} stopOpacity="0.28" />
-              <stop offset="100%" stopColor={T.mint} stopOpacity="0" />
-            </linearGradient>
-          </defs>
-          <path d={area} fill="url(#wg)" />
-          <path d={line} fill="none" stroke={T.mint} strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
-          {pts.map((pt, i) => i === pts.length - 1 && (
-            <circle key={i} cx={pt[0]} cy={pt[1]} r="5" fill={T.mint} stroke="#fff" strokeWidth="2.5" />
-          ))}
-        </svg>
-        <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 4, fontSize: 11, fontWeight: 700, color: T.ink3 }}>
-          <span>Mars</span><span>Avril</span><span>Mai</span>
-        </div>
+        {profile.weight ? (
+          <div style={{ fontSize: 12.5, fontWeight: 600, color: T.ink3, marginTop: 6 }}>
+            {base ? <>Départ {fmt(base)} kg · objectif {profile.goal.toLowerCase()}</> : <>Premier relevé enregistré 💪</>}
+          </div>
+        ) : (
+          <div onClick={onEdit} className="presslite" style={{ marginTop: 10, display: 'flex', alignItems: 'center', gap: 8, padding: '12px 14px', borderRadius: 14, background: '#F7F9F8', cursor: 'pointer' }}>
+            <Icon name="plus" size={18} color={T.mintDk} sw={2.6}/>
+            <span style={{ fontSize: 13.5, fontWeight: 700, color: T.ink2 }}>Renseigne ton poids pour démarrer ton suivi</span>
+          </div>
+        )}
       </div>
 
       <div style={{ marginTop: 22 }}>
@@ -298,7 +293,7 @@ function StatsTab({ profile, onEdit }) {
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
           {FIELDS.map((f) => {
             const d = delta(f.key);
-            return <Measure key={f.key} label={f.label} value={fmt(profile[f.key])} delta={fmtDelta(d)} up={d >= 0} />;
+            return <Measure key={f.key} label={f.label} value={profile[f.key] ? fmt(profile[f.key]) : '—'} delta={fmtDelta(d)} showDelta={d !== 0} up={d >= 0} />;
           })}
         </div>
         <button onClick={onEdit} className="press" style={{ width: '100%', marginTop: 14, border: 'none', cursor: 'pointer', padding: '14px', borderRadius: 999, background: T.ink, color: '#fff', fontSize: 14.5, fontWeight: 800, fontFamily: T.font, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
@@ -309,7 +304,7 @@ function StatsTab({ profile, onEdit }) {
   );
 }
 
-function Measure({ label, value, delta: d, up }) {
+function Measure({ label, value, delta: d, up, showDelta }) {
   return (
     <div style={{ background: '#fff', borderRadius: 20, padding: '15px 16px', boxShadow: T.shadow }}>
       <div style={{ fontSize: 12.5, fontWeight: 700, color: T.ink3 }}>{label}</div>
@@ -317,9 +312,11 @@ function Measure({ label, value, delta: d, up }) {
         <span style={{ fontFamily: T.mono, fontSize: 23, fontWeight: 700, letterSpacing: -0.5 }}>{value}</span>
         <span style={{ fontSize: 12, fontWeight: 700, color: T.ink3 }}>cm</span>
       </div>
-      <span style={{ display: 'inline-flex', alignItems: 'center', gap: 3, marginTop: 8, fontSize: 12, fontWeight: 800, color: up ? T.mintDk : T.indigo }}>
-        <Icon name={up ? 'arrowU' : 'arrowD'} size={14} sw={2.8} /> {d} cm
-      </span>
+      {showDelta && (
+        <span style={{ display: 'inline-flex', alignItems: 'center', gap: 3, marginTop: 8, fontSize: 12, fontWeight: 800, color: up ? T.mintDk : T.indigo }}>
+          <Icon name={up ? 'arrowU' : 'arrowD'} size={14} sw={2.8} /> {d} cm
+        </span>
+      )}
     </div>
   );
 }

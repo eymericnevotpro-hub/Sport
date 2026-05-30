@@ -3,20 +3,20 @@
 
 const KEY = 'bond.profile.v1';
 
-// Baseline = starting point (≈ 5 weeks ago). Deltas are computed against it so
-// the comparison badges update live when the user edits their measurements.
-export const BASELINE = { weight: 80.5, poitrine: 102.5, bras: 37.3, taille: 85, cuisse: 59.2 };
+// Baseline = first recorded value, captured the first time the user sets a
+// field (0 = not yet recorded). Deltas are computed against it.
+export const BASELINE_KEY = 'bond.baseline.v1';
 
 const DEFAULTS = {
   name: 'Brick',
   sex: 'homme',
   goal: 'Prise de masse',
-  weight: 78.4,
-  height: 178,      // taille corporelle (hauteur)
-  poitrine: 104,
-  bras: 38.5,
-  taille: 82,       // tour de taille (circonférence)
-  cuisse: 60,
+  weight: 0,
+  height: 0,        // taille corporelle (hauteur)
+  poitrine: 0,
+  bras: 0,
+  taille: 0,        // tour de taille (circonférence)
+  cuisse: 0,
 };
 
 export const GOALS = ['Prise de masse', 'Perte de gras', 'Maintien', 'Force'];
@@ -44,19 +44,37 @@ function persist() {
   try { localStorage.setItem(KEY, JSON.stringify(profile)); } catch { /* quota */ }
 }
 
+// Tracked measurements that show a delta vs their first recorded value.
+const TRACKED = ['weight', 'poitrine', 'bras', 'taille', 'cuisse'];
+
+let baseline = (() => {
+  try { return JSON.parse(localStorage.getItem(BASELINE_KEY) || '{}') || {}; }
+  catch { return {}; }
+})();
+function persistBaseline() {
+  try { localStorage.setItem(BASELINE_KEY, JSON.stringify(baseline)); } catch { /* quota */ }
+}
+
 export function getProfile() { return profile; }
+export function getBaseline(key) { return baseline[key] || 0; }
 
 export function setField(key, value) {
   profile = { ...profile, [key]: value };
   persist();
+  // Record the starting point the first time a tracked field gets a real value.
+  if (TRACKED.includes(key) && !baseline[key] && value > 0) {
+    baseline[key] = value;
+    persistBaseline();
+  }
   subs.forEach((fn) => fn());
 }
 
 export function subscribeProfile(fn) { subs.add(fn); return () => subs.delete(fn); }
 
 export function delta(key) {
-  if (!(key in BASELINE)) return 0;
-  return Math.round((profile[key] - BASELINE[key]) * 10) / 10;
+  const base = baseline[key] || 0;
+  if (!base || !profile[key]) return 0;
+  return Math.round((profile[key] - base) * 10) / 10;
 }
 
 // French number formatting: comma decimal, no trailing ".0".
