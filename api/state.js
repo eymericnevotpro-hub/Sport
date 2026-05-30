@@ -2,20 +2,15 @@
 // Stores one JSON document in the private Vercel Blob store `bond-data`.
 // No auth (single account) per the user's choice; the blob is private so it is
 // only reachable through this function with the server-side token.
-import { put, list } from '@vercel/blob';
+import { put, get } from '@vercel/blob';
 
 const PATH = 'state.json';
 const token = process.env.BLOB_READ_WRITE_TOKEN;
 
 async function readState() {
-  const { blobs } = await list({ prefix: PATH, token });
-  const blob = blobs.find((b) => b.pathname === PATH) || blobs[0];
-  if (!blob) return {};
-  const url = blob.downloadUrl || blob.url;
-  const headers = blob.downloadUrl ? {} : { Authorization: `Bearer ${token}` };
-  const r = await fetch(url, { headers, cache: 'no-store' });
-  if (!r.ok) return {};
-  return await r.json().catch(() => ({}));
+  const result = await get(PATH, { access: 'private', token });
+  if (!result || result.statusCode !== 200 || !result.stream) return {};
+  return await new Response(result.stream).json().catch(() => ({}));
 }
 
 export default async function handler(req, res) {
