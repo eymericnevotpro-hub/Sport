@@ -8,6 +8,8 @@ const KEY = 'bond.profile.v1';
 export const BASELINE = { weight: 80.5, poitrine: 102.5, bras: 37.3, taille: 85, cuisse: 59.2 };
 
 const DEFAULTS = {
+  name: 'Brick',
+  sex: 'homme',
   goal: 'Prise de masse',
   weight: 78.4,
   poitrine: 104,

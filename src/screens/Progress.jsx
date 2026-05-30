@@ -60,6 +60,8 @@ export function ProgressScreen() {
         body: JSON.stringify({
           photos,
           context: {
+            name: p.name,
+            sex: p.sex,
             goal: p.goal,
             weightKg: p.weight,
             weightDeltaKg: delta('weight'),

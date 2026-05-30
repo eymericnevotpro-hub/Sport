@@ -38,7 +38,7 @@ function Phone({ accent }) {
 
   const screen = () => {
     switch (tab) {
-      case 'home': return <HomeScreen user="Léa" streak={12} today={TODAY} nutrition={NUTRITION} nav={setTab} openSession={() => setSession(true)} />;
+      case 'home': return <HomeScreen user="Brick" streak={12} today={TODAY} nutrition={NUTRITION} nav={setTab} openSession={() => setSession(true)} />;
       case 'program': return <ProgramScreen today={TODAY} openSession={() => setSession(true)} />;
       case 'nutrition': return <NutritionScreen kcalGoal={NUTRITION.kcalGoal} macroGoal={MACRO_GOAL} />;
       case 'progress': return <ProgressScreen />;
