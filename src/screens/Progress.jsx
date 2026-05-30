@@ -5,7 +5,7 @@ import { ImageSlot } from '../ImageSlot.jsx';
 import { getPhoto, subscribe } from '../photoStore.js';
 import {
   getProfile, subscribeProfile, setField, delta, fmt, fmtDelta,
-  BASELINE, GOALS, FIELDS,
+  BASELINE, GOALS, FIELDS, HEIGHT_FIELD,
 } from '../profileStore.js';
 
 const DEFAULT_CHANGES = [
@@ -63,10 +63,11 @@ export function ProgressScreen() {
             name: p.name,
             sex: p.sex,
             goal: p.goal,
+            heightCm: p.height,
             weightKg: p.weight,
             weightDeltaKg: delta('weight'),
             weeks: 5,
-            measurements_cm: { poitrine: p.poitrine, tour_de_bras: p.bras, taille: p.taille, cuisse: p.cuisse },
+            measurements_cm: { poitrine: p.poitrine, tour_de_bras: p.bras, tour_de_taille: p.taille, cuisse: p.cuisse },
             measurement_deltas_cm: { poitrine: delta('poitrine'), tour_de_bras: delta('bras'), taille: delta('taille'), cuisse: delta('cuisse') },
             program: 'Pecs/Tri · Dos/Bi · Jambes · Épaules (4 séances/semaine)',
           },
@@ -324,7 +325,7 @@ function Measure({ label, value, delta: d, up }) {
 }
 
 function MeasureEditor({ open, onClose, profile }) {
-  const rows = [{ key: 'weight', label: 'Poids', unit: 'kg', step: 0.1 }, ...FIELDS];
+  const rows = [{ key: 'weight', label: 'Poids', unit: 'kg', step: 0.1 }, HEIGHT_FIELD, ...FIELDS];
   return (
     <Sheet open={open} onClose={onClose} title="Mes mensurations">
       <p style={{ margin: '0 2px 14px', fontSize: 13, lineHeight: 1.5, color: T.ink2, fontWeight: 600 }}>

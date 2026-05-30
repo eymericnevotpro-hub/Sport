@@ -12,18 +12,22 @@ const DEFAULTS = {
   sex: 'homme',
   goal: 'Prise de masse',
   weight: 78.4,
+  height: 178,      // taille corporelle (hauteur)
   poitrine: 104,
   bras: 38.5,
-  taille: 82,
+  taille: 82,       // tour de taille (circonférence)
   cuisse: 60,
 };
 
 export const GOALS = ['Prise de masse', 'Perte de gras', 'Maintien', 'Force'];
 
+// Champ « hauteur » à part : ne varie pas comme une mensuration, pas de delta.
+export const HEIGHT_FIELD = { key: 'height', label: 'Taille (hauteur)', unit: 'cm', step: 1 };
+
 export const FIELDS = [
   { key: 'poitrine', label: 'Poitrine', unit: 'cm', step: 0.5 },
   { key: 'bras', label: 'Tour de bras', unit: 'cm', step: 0.5 },
-  { key: 'taille', label: 'Taille', unit: 'cm', step: 0.5 },
+  { key: 'taille', label: 'Tour de taille', unit: 'cm', step: 0.5 },
   { key: 'cuisse', label: 'Cuisse', unit: 'cm', step: 0.5 },
 ];
 
