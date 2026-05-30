@@ -21,8 +21,13 @@ const EX = {
   rdl:          { name: 'Soulevé de terre roumain', gif: '/gif/rdl.gif' },
   deadlift:     { name: 'Soulevé de terre', gif: '/gif/deadlift.gif' },
   lunge:        { name: 'Fentes haltères', gif: '/gif/lunge.gif' },
-  legcurl:      { name: 'Leg curl', gif: '/gif/legcurl.gif' },
+  legcurl:      { name: 'Leg curl allongé (machine)', gif: '/gif/legcurl.gif' },
   calf:         { name: 'Mollets debout', gif: '/gif/calf.gif' },
+  // Jambes sur machines guidées (pas de poids libre)
+  hacksquat:    { name: 'Hack squat (machine)', gif: '/gif/hacksquat.gif' },
+  legext:       { name: 'Leg extension (machine)', gif: '/gif/legext.gif' },
+  seatedlegcurl:{ name: 'Leg curl assis (machine)', gif: '/gif/seatedlegcurl.gif' },
+  seatedcalf:   { name: 'Mollets assis (machine)', gif: '/gif/seatedcalf.gif' },
   shoulderpress:{ name: 'Développé épaules', gif: '/gif/shoulderpress.gif' },
   ohp:          { name: 'Développé militaire', gif: '/gif/ohp.gif' },
   lateral:      { name: 'Élévations latérales', gif: '/gif/lateralraise.gif' },
@@ -41,9 +46,9 @@ const DAYS = {
   pull:    { title: 'Pull · Dos / Biceps', kcal: 420, exercises: [
     ex('pullup', 4, 8, 0, 90), ex('pulldown', 3, 12, 50, 75), ex('row', 4, 10, 50, 90),
     ex('seatedrow', 3, 12, 45, 75), ex('barbellcurl', 3, 12, 25, 60), ex('hammercurl', 3, 12, 12, 60) ] },
-  legs:    { title: 'Legs · Jambes', kcal: 480, exercises: [
-    ex('squat', 4, 10, 60, 120), ex('rdl', 3, 10, 50, 90), ex('lunge', 3, 12, 16, 75),
-    ex('legcurl', 3, 15, 35, 60), ex('calf', 4, 15, 40, 45) ] },
+  legs:    { title: 'Legs · Jambes', kcal: 450, exercises: [
+    ex('hacksquat', 4, 10, 80, 120), ex('legext', 4, 15, 45, 75), ex('seatedlegcurl', 3, 12, 40, 75),
+    ex('legcurl', 3, 12, 35, 60), ex('seatedcalf', 4, 15, 40, 60) ] },
 
   pecs:    { title: 'Pectoraux', kcal: 400, exercises: [
     ex('bench', 4, 10, 40, 90), ex('incline', 4, 10, 28, 90), ex('fly', 3, 15, 12, 75),
@@ -51,9 +56,9 @@ const DAYS = {
   dos:     { title: 'Dos', kcal: 430, exercises: [
     ex('pullup', 4, 8, 0, 90), ex('pulldown', 4, 10, 50, 90), ex('row', 4, 10, 50, 90),
     ex('seatedrow', 3, 12, 45, 75), ex('shrug', 3, 15, 30, 60) ] },
-  jambes:  { title: 'Jambes', kcal: 480, exercises: [
-    ex('squat', 4, 10, 60, 120), ex('deadlift', 3, 8, 80, 120), ex('lunge', 3, 12, 16, 75),
-    ex('legcurl', 3, 15, 35, 60), ex('calf', 4, 15, 40, 45) ] },
+  jambes:  { title: 'Jambes', kcal: 470, exercises: [
+    ex('hacksquat', 4, 10, 80, 120), ex('legext', 4, 15, 45, 75), ex('seatedlegcurl', 4, 12, 40, 75),
+    ex('legcurl', 3, 12, 35, 60), ex('seatedcalf', 3, 15, 40, 60), ex('calf', 3, 15, 40, 45) ] },
   epaules: { title: 'Épaules', kcal: 350, exercises: [
     ex('ohp', 4, 10, 40, 90), ex('lateral', 4, 15, 10, 60), ex('front', 3, 12, 10, 60),
     ex('reardelt', 3, 15, 8, 60) ] },
@@ -64,13 +69,13 @@ const DAYS = {
   haut:    { title: 'Haut du corps', kcal: 450, exercises: [
     ex('bench', 4, 10, 40, 90), ex('pulldown', 4, 10, 50, 90), ex('shoulderpress', 3, 12, 16, 75),
     ex('row', 3, 10, 50, 75), ex('barbellcurl', 3, 12, 25, 60), ex('pushdown', 3, 15, 25, 60) ] },
-  bas:     { title: 'Bas du corps', kcal: 480, exercises: [
-    ex('squat', 4, 10, 60, 120), ex('rdl', 3, 10, 50, 90), ex('lunge', 3, 12, 16, 75),
-    ex('legcurl', 3, 15, 35, 60), ex('calf', 4, 15, 40, 45) ] },
+  bas:     { title: 'Bas du corps', kcal: 450, exercises: [
+    ex('hacksquat', 4, 10, 80, 120), ex('legext', 4, 15, 45, 75), ex('seatedlegcurl', 3, 12, 40, 75),
+    ex('legcurl', 3, 12, 35, 60), ex('seatedcalf', 4, 15, 40, 60) ] },
 
   full:    { title: 'Full Body', kcal: 500, exercises: [
-    ex('squat', 4, 10, 60, 120), ex('bench', 4, 10, 40, 90), ex('pulldown', 3, 12, 50, 75),
-    ex('shoulderpress', 3, 12, 16, 75), ex('barbellcurl', 3, 12, 25, 60), ex('calf', 3, 15, 40, 45) ] },
+    ex('hacksquat', 4, 10, 80, 120), ex('bench', 4, 10, 40, 90), ex('pulldown', 3, 12, 50, 75),
+    ex('shoulderpress', 3, 12, 16, 75), ex('barbellcurl', 3, 12, 25, 60), ex('seatedcalf', 3, 15, 40, 60) ] },
 };
 
 // Each program: a list of distinct workout days + a 7-slot week (Lun→Dim),
