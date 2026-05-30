@@ -71,6 +71,15 @@ export function setField(key, value) {
 
 export function subscribeProfile(fn) { subs.add(fn); return () => subs.delete(fn); }
 
+// Cloud sync hooks.
+export function exportState() { return { profile, baseline }; }
+export function importState(s) {
+  if (!s || typeof s !== 'object') return;
+  if (s.profile && typeof s.profile === 'object') { profile = { ...DEFAULTS, ...s.profile }; persist(); }
+  if (s.baseline && typeof s.baseline === 'object') { baseline = s.baseline; persistBaseline(); }
+  subs.forEach((fn) => fn());
+}
+
 export function delta(key) {
   const base = baseline[key] || 0;
   if (!base || !profile[key]) return 0;

@@ -27,6 +27,12 @@ export function setPhoto(id, dataUrl) {
 
 export function subscribe(fn) { subs.add(fn); return () => subs.delete(fn); }
 
+// Cloud sync hooks.
+export function exportState() { return store; }
+export function importState(s) {
+  if (s && typeof s === 'object') { store = s; persist(); subs.forEach((fn) => fn()); }
+}
+
 // Downscale an uploaded File to a capped JPEG data URL.
 export async function fileToDataUrl(file) {
   const bitmap = await createImageBitmap(file);

@@ -23,3 +23,13 @@ export function setProgramId(id) {
 }
 
 export function subscribeProgram(fn) { subs.add(fn); return () => subs.delete(fn); }
+
+// Cloud sync hooks.
+export function exportState() { return current; }
+export function importState(id) {
+  if (id && PROGRAMS.some((p) => p.id === id)) {
+    current = id;
+    try { localStorage.setItem(KEY, id); } catch { /* quota */ }
+    subs.forEach((fn) => fn());
+  }
+}
