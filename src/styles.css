@@ -2,16 +2,18 @@
 html, body { margin: 0; padding: 0; height: 100%; }
 body {
   font-family: 'Plus Jakarta Sans', system-ui, sans-serif;
-  background:
-    radial-gradient(1200px 700px at 50% -10%, #EAF1EE 0%, #E2E8E5 55%, #DBE2DE 100%);
-  display: flex; align-items: center; justify-content: center;
-  min-height: 100vh; color: #0E1A14;
+  background: #DBE2DE;
+  color: #0E1A14;
   overflow: hidden;
 }
-#root { display: flex; align-items: center; justify-content: center; min-height: 100vh; }
-#stage {
-  transform-origin: center center;
-  will-change: transform;
+/* Full-screen on phones; centered phone-width column on larger screens. */
+#root {
+  height: 100vh;
+  height: 100dvh;
+  display: flex;
+  justify-content: center;
+  background:
+    radial-gradient(1200px 700px at 50% -10%, #EAF1EE 0%, #E2E8E5 55%, #DBE2DE 100%);
 }
 ::-webkit-scrollbar { width: 0; height: 0; }
 .app-scroll { scrollbar-width: none; -ms-overflow-style: none; }

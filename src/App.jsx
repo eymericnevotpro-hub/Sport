@@ -1,7 +1,6 @@
 /* App.jsx — data, routing, bottom nav, device stage + scaling */
 import React from 'react';
 import { T, Icon } from './theme.jsx';
-import { AndroidDevice } from './AndroidFrame.jsx';
 import { HomeScreen } from './screens/Home.jsx';
 import { ProgramScreen } from './screens/Program.jsx';
 import { SessionScreen } from './screens/Session.jsx';
@@ -48,12 +47,12 @@ function Phone({ accent }) {
 
   return (
     <div style={{ position: 'relative', height: '100%', display: 'flex', flexDirection: 'column', background: T.bg, fontFamily: T.font }}>
-      <div key={tab + accent} className="app-scroll" style={{ flex: 1, overflowY: 'auto', overflowX: 'hidden' }}>
+      <div key={tab + accent} className="app-scroll" style={{ flex: 1, overflowY: 'auto', overflowX: 'hidden', paddingTop: 'env(safe-area-inset-top)' }}>
         {screen()}
       </div>
 
       {/* bottom nav */}
-      <div style={{ flexShrink: 0, background: '#fff', boxShadow: T.shadowUp, padding: '8px 12px 10px', display: 'flex', justifyContent: 'space-around', borderTop: '1px solid '+T.line }}>
+      <div style={{ flexShrink: 0, background: '#fff', boxShadow: T.shadowUp, padding: '8px 12px calc(10px + env(safe-area-inset-bottom))', display: 'flex', justifyContent: 'space-around', borderTop: '1px solid '+T.line }}>
         {NAV.map(n => {
           const on = tab === n.k;
           return (
@@ -78,31 +77,17 @@ function Phone({ accent }) {
 export default function App() {
   const [accent, setAccent] = React.useState('#16E0A0');
   const [reduceMotion, setReduceMotion] = React.useState(false);
-  const stageRef = React.useRef(null);
 
   React.useEffect(() => { document.body.classList.toggle('noanim', reduceMotion); }, [reduceMotion]);
 
-  // Scale the fixed-size phone stage to fit the viewport.
-  React.useEffect(() => {
-    const fit = () => {
-      const stage = stageRef.current;
-      if (!stage) return;
-      const W = 412 + 16, H = 892 + 16; // device + border
-      const pad = 24;
-      const s = Math.min((window.innerWidth - pad) / W, (window.innerHeight - pad) / H, 1.1);
-      stage.style.transform = `scale(${s})`;
-    };
-    fit();
-    window.addEventListener('resize', fit);
-    return () => window.removeEventListener('resize', fit);
-  }, []);
-
   return (
     <>
-      <div id="stage" ref={stageRef}>
-        <AndroidDevice>
-          <Phone accent={accent} />
-        </AndroidDevice>
+      {/* Full-screen on phones; capped to a phone-width column on wider screens. */}
+      <div style={{
+        position: 'relative', width: '100%', maxWidth: 480, height: '100%',
+        background: T.bg, overflow: 'hidden', boxShadow: '0 0 60px rgba(14,26,20,.10)',
+      }}>
+        <Phone accent={accent} />
       </div>
       <Tweaks accent={accent} setAccent={setAccent} reduceMotion={reduceMotion} setReduceMotion={setReduceMotion} />
     </>
