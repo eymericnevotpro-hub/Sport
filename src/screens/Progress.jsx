@@ -355,19 +355,42 @@ function MeasureEditor({ open, onClose, profile }) {
 }
 
 function NumberRow({ label, unit, value, step, onChange }) {
+  // Local text so the field can be typed freely (partial values, commas) — the
+  // store is updated as you type, but we only re-sync the text from `value`
+  // while the input is NOT focused, so typing isn't clobbered.
+  const [text, setText] = React.useState(fmt(value));
+  const [focused, setFocused] = React.useState(false);
+  React.useEffect(() => { if (!focused) setText(fmt(value)); }, [value, focused]);
+
+  const commit = (raw) => {
+    const n = parseFloat(String(raw).replace(',', '.'));
+    if (!Number.isNaN(n)) onChange(Math.max(0, Math.round(n * 10) / 10));
+  };
+
   const btn = (icon, fn) => (
-    <div onClick={fn} className="presslite" style={{ width: 38, height: 38, borderRadius: 12, background: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', boxShadow: T.shadow }}>
+    <div onClick={fn} className="presslite" style={{ width: 38, height: 38, borderRadius: 12, background: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', boxShadow: T.shadow, flexShrink: 0 }}>
       <Icon name={icon} size={19} color={T.ink} sw={2.6} />
     </div>
   );
+
   return (
-    <div style={{ display: 'flex', alignItems: 'center', gap: 12, background: '#F7F9F8', borderRadius: 16, padding: '10px 12px' }}>
-      <span style={{ flex: 1, fontSize: 14.5, fontWeight: 700, color: T.ink }}>{label}</span>
-      {btn('minus', () => onChange(value - step))}
-      <span style={{ fontFamily: T.mono, fontSize: 20, fontWeight: 700, minWidth: 58, textAlign: 'center' }}>
-        {fmt(value)}<span style={{ fontSize: 12, color: T.ink3, fontWeight: 700 }}> {unit}</span>
-      </span>
-      {btn('plus', () => onChange(value + step))}
+    <div style={{ display: 'flex', alignItems: 'center', gap: 10, background: '#F7F9F8', borderRadius: 16, padding: '10px 12px' }}>
+      <span style={{ flex: 1, fontSize: 14.5, fontWeight: 700, color: T.ink, minWidth: 0 }}>{label}</span>
+      {btn('minus', () => onChange(Math.max(0, Math.round((value - step) * 10) / 10)))}
+      <div style={{ display: 'flex', alignItems: 'baseline', gap: 3, justifyContent: 'center' }}>
+        <input
+          type="text"
+          inputMode="decimal"
+          value={text}
+          onFocus={(e) => { setFocused(true); e.target.select(); }}
+          onBlur={() => { commit(text); setFocused(false); }}
+          onChange={(e) => { setText(e.target.value); commit(e.target.value); }}
+          onKeyDown={(e) => { if (e.key === 'Enter') e.target.blur(); }}
+          style={{ width: 52, border: 'none', background: 'transparent', textAlign: 'right', fontFamily: T.mono, fontSize: 20, fontWeight: 700, color: T.ink, outline: 'none', padding: 0 }}
+        />
+        <span style={{ fontSize: 12, color: T.ink3, fontWeight: 700 }}>{unit}</span>
+      </div>
+      {btn('plus', () => onChange(Math.round((value + step) * 10) / 10))}
     </div>
   );
 }
