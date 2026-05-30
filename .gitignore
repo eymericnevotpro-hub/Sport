@@ -1,0 +1,12 @@
+node_modules
+dist
+.vercel
+.env
+.env.local
+*.local
+
+# design handoff bundle (kept locally, not part of the app)
+sport/
+design_raw.bin
+design.tar.gz
+design.gz
