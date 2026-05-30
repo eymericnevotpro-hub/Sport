@@ -54,29 +54,30 @@ export function importState(s) {
   if (s && typeof s === 'object' && s.date === today() && s.meals) { state = s; persist(); notify(); }
 }
 
-// Plan du jour : base ~2280 kcal mise à l'échelle sur l'objectif calorique.
+// Plan du jour : base ~2280 kcal (quantités en grammes) mise à l'échelle
+// sur l'objectif calorique — les quantités ET les macros se recalculent.
 const BASE_KCAL = 2280;
 const BASE = {
   b: [
-    { name: "Flocons d'avoine", kcal: 300, p: 10, c: 54, f: 6 },
-    { name: 'Whey (1 dose)', kcal: 120, p: 24, c: 3, f: 2 },
-    { name: 'Banane', kcal: 90, p: 1, c: 23, f: 0 },
+    { name: "Flocons d'avoine", qty: 80, unit: 'g', kcal: 300, p: 10, c: 54, f: 6 },
+    { name: 'Whey', qty: 30, unit: 'g', kcal: 120, p: 24, c: 3, f: 2 },
+    { name: 'Banane', qty: 120, unit: 'g', kcal: 90, p: 1, c: 23, f: 0 },
   ],
   l: [
-    { name: 'Poulet grillé', kcal: 250, p: 47, c: 0, f: 6 },
-    { name: 'Riz basmati', kcal: 200, p: 4, c: 44, f: 0 },
-    { name: 'Légumes verts', kcal: 80, p: 5, c: 12, f: 1 },
-    { name: "Huile d'olive", kcal: 90, p: 0, c: 0, f: 10 },
+    { name: 'Poulet grillé', qty: 150, unit: 'g', kcal: 250, p: 47, c: 0, f: 6 },
+    { name: 'Riz basmati (cuit)', qty: 150, unit: 'g', kcal: 200, p: 4, c: 44, f: 0 },
+    { name: 'Légumes verts', qty: 150, unit: 'g', kcal: 80, p: 5, c: 12, f: 1 },
+    { name: "Huile d'olive", qty: 10, unit: 'g', kcal: 90, p: 0, c: 0, f: 10 },
   ],
   s: [
-    { name: 'Skyr', kcal: 120, p: 20, c: 8, f: 0 },
-    { name: 'Amandes (30g)', kcal: 180, p: 7, c: 6, f: 16 },
-    { name: 'Pomme', kcal: 80, p: 0, c: 21, f: 0 },
+    { name: 'Skyr', qty: 150, unit: 'g', kcal: 120, p: 20, c: 8, f: 0 },
+    { name: 'Amandes', qty: 30, unit: 'g', kcal: 180, p: 7, c: 6, f: 16 },
+    { name: 'Pomme', qty: 150, unit: 'g', kcal: 80, p: 0, c: 21, f: 0 },
   ],
   d: [
-    { name: 'Saumon', kcal: 280, p: 34, c: 0, f: 16 },
-    { name: 'Patate douce', kcal: 180, p: 3, c: 41, f: 0 },
-    { name: 'Légumes', kcal: 80, p: 5, c: 12, f: 1 },
+    { name: 'Saumon', qty: 150, unit: 'g', kcal: 280, p: 34, c: 0, f: 16 },
+    { name: 'Patate douce', qty: 200, unit: 'g', kcal: 180, p: 3, c: 41, f: 0 },
+    { name: 'Légumes', qty: 150, unit: 'g', kcal: 80, p: 5, c: 12, f: 1 },
   ],
 };
 
@@ -85,6 +86,8 @@ export function generatePlan(kcalGoal) {
   const k = Math.max(0.5, Math.min(2, (kcalGoal || BASE_KCAL) / BASE_KCAL));
   const scale = (it) => ({
     name: it.name,
+    qty: it.unit === 'g' ? Math.max(5, Math.round((it.qty * k) / 5) * 5) : Math.round(it.qty * k),
+    unit: it.unit,
     kcal: Math.round(it.kcal * k),
     p: Math.round(it.p * k), c: Math.round(it.c * k), f: Math.round(it.f * k),
   });

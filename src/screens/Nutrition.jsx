@@ -14,21 +14,28 @@ const MEALS = [
 ];
 
 const SUGGESTIONS = [
-  { name: 'Œufs brouillés (2)', kcal: 180, p: 14, c: 1, f: 13 },
-  { name: 'Blanc de poulet 150g', kcal: 250, p: 47, c: 0, f: 6 },
-  { name: 'Saumon 150g', kcal: 280, p: 34, c: 0, f: 16 },
-  { name: 'Steak haché 5% 150g', kcal: 220, p: 33, c: 0, f: 9 },
-  { name: 'Riz basmati 150g', kcal: 200, p: 4, c: 44, f: 0 },
-  { name: 'Patate douce 200g', kcal: 180, p: 3, c: 41, f: 0 },
-  { name: 'Flocons d’avoine 80g', kcal: 300, p: 10, c: 54, f: 6 },
-  { name: 'Whey (1 dose)', kcal: 120, p: 24, c: 3, f: 2 },
-  { name: 'Skyr nature', kcal: 120, p: 20, c: 8, f: 0 },
-  { name: 'Fromage blanc 0%', kcal: 90, p: 16, c: 6, f: 0 },
-  { name: 'Amandes 30g', kcal: 180, p: 7, c: 6, f: 16 },
-  { name: 'Avocat ½', kcal: 160, p: 2, c: 9, f: 15 },
-  { name: 'Banane', kcal: 90, p: 1, c: 23, f: 0 },
-  { name: 'Barre protéinée', kcal: 210, p: 20, c: 21, f: 7 },
+  { name: 'Œufs', qty: 2, unit: '', kcal: 180, p: 14, c: 1, f: 13 },
+  { name: 'Blanc de poulet', qty: 150, unit: 'g', kcal: 250, p: 47, c: 0, f: 6 },
+  { name: 'Saumon', qty: 150, unit: 'g', kcal: 280, p: 34, c: 0, f: 16 },
+  { name: 'Steak haché 5%', qty: 150, unit: 'g', kcal: 220, p: 33, c: 0, f: 9 },
+  { name: 'Riz basmati (cuit)', qty: 150, unit: 'g', kcal: 200, p: 4, c: 44, f: 0 },
+  { name: 'Patate douce', qty: 200, unit: 'g', kcal: 180, p: 3, c: 41, f: 0 },
+  { name: "Flocons d'avoine", qty: 80, unit: 'g', kcal: 300, p: 10, c: 54, f: 6 },
+  { name: 'Whey', qty: 30, unit: 'g', kcal: 120, p: 24, c: 3, f: 2 },
+  { name: 'Skyr nature', qty: 150, unit: 'g', kcal: 120, p: 20, c: 8, f: 0 },
+  { name: 'Fromage blanc 0%', qty: 150, unit: 'g', kcal: 90, p: 16, c: 6, f: 0 },
+  { name: 'Amandes', qty: 30, unit: 'g', kcal: 180, p: 7, c: 6, f: 16 },
+  { name: 'Avocat', qty: 0.5, unit: '', kcal: 160, p: 2, c: 9, f: 15 },
+  { name: 'Banane', qty: 120, unit: 'g', kcal: 90, p: 1, c: 23, f: 0 },
+  { name: 'Barre protéinée', qty: 1, unit: '', kcal: 210, p: 20, c: 21, f: 7 },
 ];
+
+function qtyLabel(it) {
+  if (!it || it.qty == null || it.qty === '') return '';
+  const n = Math.round(it.qty * 10) / 10;
+  const num = (Number.isInteger(n) ? String(n) : n.toFixed(1)).replace('.', ',');
+  return num + (it.unit ? ' ' + it.unit : '');
+}
 
 export function NutritionScreen({ goal }) {
   const kcalGoal = goal.kcalGoal;
@@ -141,8 +148,10 @@ export function NutritionScreen({ goal }) {
                 {items.map((it, i) => (
                   <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '7px 0', borderTop: '1px solid '+T.line }}>
                     <div style={{ width: 6, height: 6, borderRadius: 999, background: T.mint, flexShrink: 0 }} />
-                    <span style={{ flex: 1, fontSize: 13.5, fontWeight: 600, color: T.ink }}>{it.name}</span>
-                    <span style={{ fontSize: 12.5, fontWeight: 700, color: T.ink3 }}>{it.kcal} kcal</span>
+                    <span style={{ flex: 1, fontSize: 13.5, fontWeight: 600, color: T.ink, minWidth: 0 }}>
+                      {it.name}{qtyLabel(it) && <span style={{ color: T.ink3, fontWeight: 700 }}> · {qtyLabel(it)}</span>}
+                    </span>
+                    <span style={{ fontSize: 12.5, fontWeight: 700, color: T.ink3, flexShrink: 0 }}>{it.kcal} kcal</span>
                     <div onClick={() => removeItem(m.id, i)} className="presslite" style={{ width: 24, height: 24, borderRadius: 999, background: '#F1F4F2', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', flexShrink: 0 }}>
                       <Icon name="x" size={13} color={T.ink3} sw={2.6} />
                     </div>
@@ -163,7 +172,7 @@ export function NutritionScreen({ goal }) {
           {SUGGESTIONS.map((s, i) => (
             <div key={i} onClick={() => addFood(s)} className="presslite" style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '11px 12px', borderRadius: 16, background: '#F7F9F8', cursor: 'pointer' }}>
               <div style={{ flex: 1 }}>
-                <div style={{ fontSize: 14.5, fontWeight: 700 }}>{s.name}</div>
+                <div style={{ fontSize: 14.5, fontWeight: 700 }}>{s.name}{qtyLabel(s) && <span style={{ color: T.ink3, fontWeight: 700 }}> · {qtyLabel(s)}</span>}</div>
                 <div style={{ fontSize: 11.5, fontWeight: 600, color: T.ink3, marginTop: 2 }}>P {s.p} · G {s.c} · L {s.f}</div>
               </div>
               <span style={{ fontFamily: T.mono, fontSize: 14, fontWeight: 700, color: T.ink2 }}>{s.kcal}</span>
