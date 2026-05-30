@@ -10,17 +10,24 @@ import android.os.VibrationEffect
 import android.os.Vibrator
 import android.os.VibratorManager
 
-// Fait vibrer fort la montre — fonctionne MÊME écran éteint (déclenché par
-// AlarmManager via setExactAndAllowWhileIdle).
-fun vibrateEnd(ctx: Context) {
-    val vib: Vibrator = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+private fun vibrator(ctx: Context): Vibrator =
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
         (ctx.getSystemService(Context.VIBRATOR_MANAGER_SERVICE) as VibratorManager).defaultVibrator
     } else {
         @Suppress("DEPRECATION")
         ctx.getSystemService(Context.VIBRATOR_SERVICE) as Vibrator
     }
+
+// Vibration forte de fin de repos — fonctionne MÊME écran éteint (déclenchée
+// par AlarmManager) et au premier plan (appelée par le ViewModel).
+fun vibrateEnd(ctx: Context) {
     val pattern = longArrayOf(0, 500, 250, 600, 250, 800)
-    vib.vibrate(VibrationEffect.createWaveform(pattern, -1))
+    vibrator(ctx).vibrate(VibrationEffect.createWaveform(pattern, -1))
+}
+
+// Petit retour haptique (validation d'une série).
+fun vibrateClick(ctx: Context) {
+    vibrator(ctx).vibrate(VibrationEffect.createOneShot(45, VibrationEffect.DEFAULT_AMPLITUDE))
 }
 
 class RestAlarmReceiver : BroadcastReceiver() {

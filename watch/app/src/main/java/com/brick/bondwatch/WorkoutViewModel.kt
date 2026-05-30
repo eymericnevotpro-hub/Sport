@@ -63,6 +63,7 @@ class WorkoutViewModel(app: Application) : AndroidViewModel(app) {
     fun validateSet() {
         val s = session ?: return
         val ex = s.exercises.getOrNull(exIndex) ?: return
+        vibrateClick(getApplication()) // retour haptique
         val lastSet = setIndex >= ex.sets - 1
         val lastEx = exIndex >= s.exercises.size - 1
         if (lastSet && lastEx) {
@@ -84,7 +85,15 @@ class WorkoutViewModel(app: Application) : AndroidViewModel(app) {
         tickJob = viewModelScope.launch {
             while (resting) {
                 val remainMs = restEnd - SystemClock.elapsedRealtime()
-                if (remainMs <= 0) { resting = false; restLeft = 0; break }
+                if (remainMs <= 0) {
+                    resting = false; restLeft = 0
+                    RestAlarm.cancel(getApplication())
+                    // Vibration au premier plan. Si remainMs très négatif, le repos
+                    // s'est terminé pendant que l'écran était éteint → l'alarme a déjà
+                    // vibré, on ne re-vibre pas.
+                    if (remainMs > -1500) vibrateEnd(getApplication())
+                    break
+                }
                 restLeft = max(0, ceil(remainMs / 1000.0).toInt())
                 delay(300)
             }

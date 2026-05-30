@@ -27,7 +27,7 @@ import androidx.wear.compose.material.Scaffold
 import androidx.wear.compose.material.Text
 import androidx.wear.compose.material.TimeText
 
-private val Mint = androidx.compose.ui.graphics.Color(0xFFFF7A4D) // accent orange (cohérent avec l'app)
+private val Mint = androidx.compose.ui.graphics.Color(0xFFE8551F) // orange foncé, lisible sur fond clair
 
 @Composable
 fun BondApp(vm: WorkoutViewModel) {

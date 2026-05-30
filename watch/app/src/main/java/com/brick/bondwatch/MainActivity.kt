@@ -11,7 +11,7 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
-            MaterialTheme {
+            MaterialTheme(colors = BondColors) {
                 val vm: WorkoutViewModel = viewModel()
                 LaunchedEffect(Unit) { vm.load() }
                 BondApp(vm)
