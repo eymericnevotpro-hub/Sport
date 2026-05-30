@@ -49,22 +49,43 @@ export function SessionScreen({ today, onClose, onFinish }) {
 
   // Rest countdown driven by the wall clock. Re-sync immediately when the tab
   // becomes visible again (after unlocking the phone) so the timer reflects the
-  // real elapsed time instead of a throttled, frozen value.
+  // real elapsed time instead of a throttled, frozen value. Vibrates once per
+  // second, and a long buzz at the end (only while the page is visible — the OS
+  // cancels vibration and suspends JS once the screen is locked).
   React.useEffect(() => {
     if (!resting) return;
     let done = false;
+    let lastSec = -1;
+    let wakeLock = null;
+    const vibrate = (ms) => { try { navigator.vibrate && navigator.vibrate(ms); } catch { /* noop */ } };
+    const acquireWakeLock = async () => {
+      try {
+        if (navigator.wakeLock && document.visibilityState === 'visible' && (!wakeLock || wakeLock.released)) {
+          wakeLock = await navigator.wakeLock.request('screen');
+        }
+      } catch { /* noop */ }
+    };
+    acquireWakeLock();
+
     const tick = () => {
       const t = Date.now();
       setNowTs(t);
       if (!done && t >= restEnd) {
         done = true;
         setResting(false);
-        try { navigator.vibrate && navigator.vibrate([180, 80, 180]); } catch { /* noop */ }
+        vibrate(800);   // vibration longue de fin de repos
         playBeep();
+        return;
+      }
+      const sec = Math.max(0, Math.ceil((restEnd - t) / 1000));
+      if (sec !== lastSec) {
+        lastSec = sec;
+        if (sec > 0 && document.visibilityState === 'visible') vibrate(90); // tic chaque seconde
       }
     };
-    const id = setInterval(tick, 400);
-    const onVisible = () => tick();
+
+    const id = setInterval(tick, 250);
+    const onVisible = () => { tick(); acquireWakeLock(); };
     document.addEventListener('visibilitychange', onVisible);
     window.addEventListener('focus', onVisible);
     tick();
@@ -72,6 +93,7 @@ export function SessionScreen({ today, onClose, onFinish }) {
       clearInterval(id);
       document.removeEventListener('visibilitychange', onVisible);
       window.removeEventListener('focus', onVisible);
+      try { wakeLock && wakeLock.release && wakeLock.release(); } catch { /* noop */ }
     };
   }, [resting, restEnd]);
 
