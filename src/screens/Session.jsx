@@ -75,7 +75,7 @@ export function SessionScreen({ today, onClose, onFinish }) {
       <div className="app-scroll" style={{ flex: 1, overflowY: 'auto', padding: '4px 18px 24px' }}>
         {/* GIF */}
         <div style={{ position: 'relative', borderRadius: 28, overflow: 'hidden', boxShadow: T.shadow, background: '#E9EEEB' }}>
-          <ExerciseGif dir={ex.img} radius={28} style={{ width: '100%', height: 250 }} dur={1.8} />
+          <ExerciseGif src={ex.gif} radius={28} style={{ width: '100%', height: 250 }} />
           <span style={{ position: 'absolute', top: 12, left: 12, display: 'inline-flex', alignItems: 'center', gap: 5, padding: '6px 11px', borderRadius: 999, background: 'rgba(14,26,20,.72)', color: '#fff', fontSize: 11.5, fontWeight: 800, backdropFilter: 'blur(6px)' }}>
             <Icon name="dumbbell" size={13} color={T.mint} sw={2.6}/> Exercice {activeEx + 1}/{ex0.length}
           </span>

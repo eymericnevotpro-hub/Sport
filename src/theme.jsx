@@ -140,12 +140,11 @@ export function Sheet({ open, onClose, children, title }) {
   );
 }
 
-// ── Animated exercise demo (crossfade two positions → looks like a GIF) ──
-export function ExerciseGif({ dir, radius = 16, style, dur = 1.7 }) {
+// ── Animated exercise demo (anatomical illustration GIF) ──
+export function ExerciseGif({ src, radius = 16, style }) {
   return (
-    <div style={{ position: 'relative', overflow: 'hidden', borderRadius: radius, background: '#E4EAE7', ...style }}>
-      <img src={dir + '/0.jpg'} alt="" draggable="false" style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', userSelect: 'none' }} />
-      <img src={dir + '/1.jpg'} alt="" draggable="false" className="exframe" style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', opacity: 0, animation: `exFade ${dur}s ease-in-out infinite`, userSelect: 'none' }} />
+    <div style={{ position: 'relative', overflow: 'hidden', borderRadius: radius, background: '#FFFFFF', ...style }}>
+      <img src={src} alt="" draggable="false" style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'contain', userSelect: 'none' }} />
     </div>
   );
 }

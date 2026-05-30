@@ -52,7 +52,7 @@ export function ProgramScreen({ openSession, today }) {
           {today.exercises.map((ex, i) => (
             <div key={i} className="presslite" style={{ display: 'flex', alignItems: 'center', gap: 14, background: '#fff', borderRadius: 22, padding: 10, boxShadow: T.shadow }}>
               <div style={{ position: 'relative', width: 62, height: 62, borderRadius: 16, overflow: 'hidden', background: '#F1F4F2', flexShrink: 0 }}>
-                <ExerciseGif dir={ex.img} radius={16} style={{ width: 62, height: 62 }} dur={1.7 + i * 0.12} />
+                <ExerciseGif src={ex.gif} radius={16} style={{ width: 62, height: 62 }} />
               </div>
               <div style={{ flex: 1, minWidth: 0 }}>
                 <div style={{ fontSize: 15, fontWeight: 800, letterSpacing: -0.3, lineHeight: 1.15 }}>{ex.name}</div>

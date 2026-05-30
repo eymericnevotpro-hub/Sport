@@ -13,12 +13,12 @@ const TODAY = {
   duration: 45,
   kcal: 430,
   exercises: [
-    { name: 'Développé couché haltères', sets: 4, reps: 12, weight: 24, rest: 90, img: '/exercises/Dumbbell_Bench_Press' },
-    { name: 'Écarté incliné à la poulie', sets: 3, reps: 15, weight: 12, rest: 75, img: '/exercises/Incline_Dumbbell_Flyes' },
-    { name: 'Développé incliné machine', sets: 4, reps: 10, weight: 40, rest: 90, img: '/exercises/Incline_Dumbbell_Press' },
-    { name: 'Dips lestés', sets: 3, reps: 12, weight: 10, rest: 75, img: '/exercises/Dips_-_Triceps_Version' },
-    { name: 'Extension triceps poulie', sets: 3, reps: 15, weight: 25, rest: 60, img: '/exercises/Triceps_Pushdown' },
-    { name: 'Barre au front', sets: 3, reps: 12, weight: 20, rest: 60, img: '/exercises/EZ-Bar_Skullcrusher' },
+    { name: 'Développé couché', sets: 4, reps: 12, weight: 24, rest: 90, gif: '/gif/developpe-couche.gif' },
+    { name: 'Écarté incliné', sets: 3, reps: 15, weight: 12, rest: 75, gif: '/gif/ecarte-incline.gif' },
+    { name: 'Développé incliné', sets: 4, reps: 10, weight: 28, rest: 90, gif: '/gif/developpe-incline.gif' },
+    { name: 'Dips lestés', sets: 3, reps: 12, weight: 10, rest: 75, gif: '/gif/dips.gif' },
+    { name: 'Extension triceps poulie', sets: 3, reps: 15, weight: 25, rest: 60, gif: '/gif/extension-triceps.gif' },
+    { name: 'Développé couché serré', sets: 3, reps: 12, weight: 20, rest: 60, gif: '/gif/developpe-serre.gif' },
   ],
 };
 const NUTRITION = { kcal: 1440, kcalGoal: 2200, p: 145, pGoal: 160, c: 150, cGoal: 220, f: 30, fGoal: 70 };
