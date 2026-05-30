@@ -4,7 +4,7 @@ import React from 'react';
 import { T, Icon } from './theme.jsx';
 import { getPhoto, setPhoto, subscribe, fileToDataUrl } from './photoStore.js';
 
-export function ImageSlot({ id, shape = 'rounded', radius = 12, placeholder = 'Ajouter une photo', style }) {
+export function ImageSlot({ id, shape = 'rounded', radius = 12, placeholder = 'Ajouter une photo', style, onFilled }) {
   const [, bump] = React.useReducer((x) => x + 1, 0);
   const [over, setOver] = React.useState(false);
   const [menu, setMenu] = React.useState(false);
@@ -18,7 +18,7 @@ export function ImageSlot({ id, shape = 'rounded', radius = 12, placeholder = 'A
 
   const ingest = async (file) => {
     if (!file || !/^image\//.test(file.type)) return;
-    try { setPhoto(id, await fileToDataUrl(file)); } catch { /* ignore */ }
+    try { setPhoto(id, await fileToDataUrl(file)); onFilled && onFilled(); } catch { /* ignore */ }
   };
 
   const onInput = (e) => { const f = e.target.files && e.target.files[0]; if (f) ingest(f); e.target.value = ''; };

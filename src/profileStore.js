@@ -20,6 +20,8 @@ const DEFAULTS = {
   taille: 0,        // tour de taille (circonférence)
   cuisse: 0,
   nutritionOverride: null, // {kcalGoal,p,c,f} appliqué depuis l'analyse IA
+  lastMeasureAt: 0, // dernier enregistrement des mensurations (ms)
+  lastPhotoAt: 0,   // dernière photo de progression (ms)
 };
 
 export const GOALS = ['Prise de masse', 'Perte de gras', 'Maintien', 'Force'];
@@ -83,6 +85,15 @@ export function commitBaseline() {
 }
 
 export function subscribeProfile(fn) { subs.add(fn); return () => subs.delete(fn); }
+
+// Horodatage des rappels (mensurations / photos).
+export function markMeasured() { profile = { ...profile, lastMeasureAt: Date.now() }; persist(); subs.forEach((fn) => fn()); }
+export function markPhoto() { profile = { ...profile, lastPhotoAt: Date.now() }; persist(); subs.forEach((fn) => fn()); }
+
+// Rappels : true quand c'est le moment (ou jamais fait). Intervalles en jours.
+const DAY = 86400000;
+export function measuresDue(days = 14) { const t = profile.lastMeasureAt; return !t || (Date.now() - t) > days * DAY; }
+export function photoDue(days = 30) { const t = profile.lastPhotoAt; return !t || (Date.now() - t) > days * DAY; }
 
 // Cloud sync hooks.
 export function exportState() { return { profile, baseline }; }

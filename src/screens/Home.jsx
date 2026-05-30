@@ -2,6 +2,7 @@
 import { T, Icon, Ring, MacroBar, SectionTitle } from '../theme.jsx';
 import { ImageSlot } from '../ImageSlot.jsx';
 import { durationOf, todayIndex, WEEKDAYS } from '../programs.js';
+import { getProfile, measuresDue, photoDue } from '../profileStore.js';
 
 function todayLabel() {
   try {
@@ -13,6 +14,9 @@ function todayLabel() {
 export function HomeScreen({ nav, openToday, goProgram, today, nutritionGoal, user }) {
   const tIdx = todayIndex();
   const week = WEEKDAYS.map((d, i) => ({ d: d[0], v: 0, on: false, today: i === tIdx }));
+  const profile = getProfile();
+  const remMeasures = measuresDue(14);
+  const remPhoto = photoDue(30);
 
   return (
     <div style={{ padding: '6px 18px 12px', animation: 'fadeIn .4s .04s forwards' }}>
@@ -29,6 +33,22 @@ export function HomeScreen({ nav, openToday, goProgram, today, nutritionGoal, us
           <Icon name="bell" size={21} color={T.ink} sw={2} />
         </div>
       </div>
+
+      {/* Rappels */}
+      {(remPhoto || remMeasures) && (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginBottom: 16 }}>
+          {remPhoto && (
+            <ReminderCard icon="camera" accent={T.indigo} soft={T.indigoSoft}
+              title="Photo du mois" text="Prends ta photo de face pour suivre ton évolution."
+              onClick={() => nav('progress')} />
+          )}
+          {remMeasures && (
+            <ReminderCard icon="target" accent={T.amber} soft={T.amberSoft}
+              title="Mets à jour tes mensurations" text="Poids & mensurations : c'est le moment de les relever."
+              onClick={() => nav('progress')} />
+          )}
+        </div>
+      )}
 
       {/* Hero — séance du jour (ou repos) */}
       {today ? (
@@ -113,6 +133,21 @@ export function HomeScreen({ nav, openToday, goProgram, today, nutritionGoal, us
           </div>
         </div>
       </div>
+    </div>
+  );
+}
+
+function ReminderCard({ icon, accent, soft, title, text, onClick }) {
+  return (
+    <div onClick={onClick} className="press" style={{ display: 'flex', alignItems: 'center', gap: 13, background: '#fff', borderRadius: 20, padding: '13px 15px', boxShadow: T.shadow, cursor: 'pointer', borderLeft: `4px solid ${accent}` }}>
+      <div style={{ width: 42, height: 42, borderRadius: 13, flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', background: soft }}>
+        <Icon name={icon} size={22} color={accent} sw={2.3} />
+      </div>
+      <div style={{ flex: 1, minWidth: 0 }}>
+        <div style={{ fontSize: 14.5, fontWeight: 800, letterSpacing: -0.2 }}>{title}</div>
+        <div style={{ fontSize: 12, fontWeight: 600, color: T.ink3, marginTop: 2, lineHeight: 1.3 }}>{text}</div>
+      </div>
+      <Icon name="chevR" size={19} color={T.ink3} sw={2.4} />
     </div>
   );
 }

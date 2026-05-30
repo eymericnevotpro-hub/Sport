@@ -5,8 +5,22 @@ import { ImageSlot } from '../ImageSlot.jsx';
 import { getPhoto, subscribe } from '../photoStore.js';
 import {
   getProfile, subscribeProfile, setField, delta, fmt, fmtDelta,
-  getBaseline, commitBaseline, GOALS, LEVELS, FIELDS, HEIGHT_FIELD,
+  getBaseline, commitBaseline, markMeasured, markPhoto, GOALS, LEVELS, FIELDS, HEIGHT_FIELD,
 } from '../profileStore.js';
+
+// Les N derniers mois (le plus récent d'abord) pour l'historique photo.
+function lastMonths(n) {
+  const out = [];
+  const d = new Date(); d.setDate(1);
+  for (let i = 0; i < n; i++) {
+    const key = d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0');
+    let label = d.toLocaleString('fr-FR', { month: 'short' }).replace('.', '');
+    label = label.charAt(0).toUpperCase() + label.slice(1);
+    out.push({ key, label, year: d.getFullYear() });
+    d.setMonth(d.getMonth() - 1);
+  }
+  return out;
+}
 import { getProgramId } from '../programStore.js';
 import { getProgramById } from '../programs.js';
 
@@ -216,16 +230,18 @@ export function ProgressScreen() {
             </div>
           </div>
 
-          {/* timeline */}
+          {/* timeline — une photo de face par mois */}
           <div style={{ marginTop: 24 }}>
-            <SectionTitle action="Tout voir">Historique</SectionTitle>
+            <h2 style={{ margin: '4px 2px 4px', fontSize: 18, fontWeight: 800, letterSpacing: -0.4 }}>Historique mensuel</h2>
+            <div style={{ fontSize: 12.5, fontWeight: 600, color: T.ink3, margin: '0 2px 12px' }}>Une photo de face par mois pour voir l'évolution.</div>
             <div className="app-scroll" style={{ display: 'flex', gap: 10, overflowX: 'auto', margin: '0 -18px', padding: '0 18px 4px' }}>
-              {['Photo 1', 'Photo 2', 'Photo 3', 'Photo 4'].map((d, i) => (
-                <div key={i} className="presslite" style={{ flexShrink: 0, width: 92 }}>
-                  <div style={{ borderRadius: 16, overflow: 'hidden', background: '#E9EEEB', boxShadow: T.shadow }}>
-                    <ImageSlot id={'tl-' + i} shape="rounded" radius={16} style={{ width: 92, height: 116 }} placeholder="+" />
+              {lastMonths(6).map((m, i) => (
+                <div key={m.key} className="presslite" style={{ flexShrink: 0, width: 92 }}>
+                  <div style={{ borderRadius: 16, overflow: 'hidden', background: '#E9EEEB', boxShadow: T.shadow, border: i === 0 ? `2px solid ${T.mint}` : 'none' }}>
+                    <ImageSlot id={'mphoto-' + m.key} shape="rounded" radius={16} style={{ width: 92, height: 116 }} placeholder={i === 0 ? 'Ce mois' : 'Face'} onFilled={markPhoto} />
                   </div>
-                  <div style={{ fontSize: 12, fontWeight: 800, marginTop: 7 }}>{d}</div>
+                  <div style={{ fontSize: 12.5, fontWeight: 800, marginTop: 7, color: i === 0 ? T.mintDk : T.ink }}>{m.label}</div>
+                  <div style={{ fontSize: 11, fontWeight: 700, color: T.ink3 }}>{m.year}</div>
                 </div>
               ))}
             </div>
@@ -236,7 +252,7 @@ export function ProgressScreen() {
       )}
 
       {/* measurements editor */}
-      <MeasureEditor open={editor} onClose={() => { commitBaseline(); setEditor(false); }} profile={p} />
+      <MeasureEditor open={editor} onClose={() => { commitBaseline(); markMeasured(); setEditor(false); }} profile={p} />
 
       {/* AI program sheet */}
       <Sheet open={aiOpen} onClose={() => setAiOpen(false)} title="Programme & nutrition ajustés">
@@ -282,7 +298,7 @@ function PhotoCol({ id, date, weight, tag, tagBg, tagColor, live }) {
   return (
     <div style={{ flex: 1 }}>
       <div style={{ position: 'relative', borderRadius: 22, overflow: 'hidden', background: '#E9EEEB', boxShadow: T.shadow }}>
-        <ImageSlot id={id} shape="rounded" radius={22} style={{ width: '100%', height: 210 }} placeholder={live ? 'Prends ta photo' : 'Dépose la photo'} />
+        <ImageSlot id={id} shape="rounded" radius={22} style={{ width: '100%', height: 210 }} placeholder={live ? 'Prends ta photo' : 'Dépose la photo'} onFilled={markPhoto} />
         <span style={{ position: 'absolute', top: 10, left: 10, padding: '5px 10px', borderRadius: 999, background: tagBg, color: tagColor, fontSize: 11, fontWeight: 800, pointerEvents: 'none' }}>{tag}</span>
         {live && <span style={{ position: 'absolute', bottom: 10, right: 10, width: 34, height: 34, borderRadius: 999, background: T.mint, display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: T.glow, pointerEvents: 'none' }}><Icon name="camera" size={18} color="#08231A" sw={2.4}/></span>}
       </div>
