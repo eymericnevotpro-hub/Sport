@@ -18,6 +18,17 @@ function load() {
 }
 
 let state = load();
+
+// Modèle de plan persistant (préférence) : par défaut le plan de base, ou le
+// dernier plan défini par le coach. Sert de source pour « Générer mon plan ».
+const TKEY = 'bond.nutrition.template.v1';
+function loadTemplate() {
+  try { const t = JSON.parse(localStorage.getItem(TKEY) || 'null'); return t && t.b ? t : null; }
+  catch { return null; }
+}
+let template = loadTemplate();
+function persistTemplate() { try { localStorage.setItem(TKEY, JSON.stringify(template)); } catch { /* quota */ } }
+
 const subs = new Set();
 
 function persist() { try { localStorage.setItem(KEY, JSON.stringify(state)); } catch { /* quota */ } }
@@ -67,13 +78,20 @@ export function setMeals(meals) {
     if (Array.isArray(meals && meals[k])) clean[k] = meals[k].map(sanitizeFood);
   }
   state = { ...state, meals: clean };
+  // Le plan du coach devient le modèle réutilisé par « Générer mon plan ».
+  template = clean;
+  persistTemplate();
   persist(); notify();
 }
 
-// Cloud sync hooks.
-export function exportState() { return state; }
+// Cloud sync hooks (journal du jour + modèle de plan persistant).
+export function exportState() { return { ...state, template }; }
 export function importState(s) {
-  if (s && typeof s === 'object' && s.date === today() && s.meals) { state = s; persist(); notify(); }
+  if (!s || typeof s !== 'object') return;
+  let changed = false;
+  if (s.template && s.template.b) { template = s.template; persistTemplate(); changed = true; }
+  if (s.date === today() && s.meals) { state = { date: s.date, meals: s.meals, water: s.water || 0 }; persist(); changed = true; }
+  if (changed) notify();
 }
 
 // Plan du jour : base ~2280 kcal (quantités en grammes) mise à l'échelle
@@ -103,18 +121,30 @@ const BASE = {
   ],
 };
 
+function totalKcal(src) {
+  let t = 0;
+  for (const m of ['b', 'l', 's', 'd']) for (const it of (src[m] || [])) t += it.kcal || 0;
+  return t || BASE_KCAL;
+}
+
+// Génère le plan du jour à partir du modèle (plan du coach s'il existe, sinon
+// plan de base), mis à l'échelle de l'objectif calorique → cohérent avec les
+// modifications faites via le coach.
 export function generatePlan(kcalGoal) {
   ensureToday();
-  const k = Math.max(0.5, Math.min(2, (kcalGoal || BASE_KCAL) / BASE_KCAL));
+  const src = template || BASE;
+  const k = Math.max(0.5, Math.min(2, (kcalGoal || totalKcal(src)) / totalKcal(src)));
   const scale = (it) => ({
     name: it.name,
-    qty: it.unit === 'g' ? Math.max(5, Math.round((it.qty * k) / 5) * 5) : Math.round(it.qty * k),
-    unit: it.unit,
-    kcal: Math.round(it.kcal * k),
-    p: Math.round(it.p * k), c: Math.round(it.c * k), f: Math.round(it.f * k),
+    qty: it.qty == null ? null
+      : it.unit === 'g' ? Math.max(5, Math.round((it.qty * k) / 5) * 5)
+      : Math.max(0.5, Math.round(it.qty * k * 2) / 2),
+    unit: it.unit || '',
+    kcal: Math.round((it.kcal || 0) * k),
+    p: Math.round((it.p || 0) * k), c: Math.round((it.c || 0) * k), f: Math.round((it.f || 0) * k),
   });
   const meals = {};
-  for (const m of ['b', 'l', 's', 'd']) meals[m] = BASE[m].map(scale);
+  for (const m of ['b', 'l', 's', 'd']) meals[m] = (src[m] || []).map(scale);
   state = { ...state, meals };
   persist(); notify();
 }
