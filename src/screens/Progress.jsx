@@ -5,7 +5,7 @@ import { ImageSlot } from '../ImageSlot.jsx';
 import { getPhoto, subscribe } from '../photoStore.js';
 import {
   getProfile, subscribeProfile, setField, delta, fmt, fmtDelta,
-  getBaseline, GOALS, FIELDS, HEIGHT_FIELD,
+  getBaseline, GOALS, LEVELS, FIELDS, HEIGHT_FIELD,
 } from '../profileStore.js';
 import { getProgramId } from '../programStore.js';
 import { getProgramById } from '../programs.js';
@@ -36,7 +36,7 @@ export function ProgressScreen() {
   const [toast, setToast] = React.useState(false);
   const [, bump] = React.useReducer((x) => x + 1, 0);
 
-  const [ai, setAi] = React.useState({ status: 'idle', summary: null, changes: DEFAULT_CHANGES, error: null });
+  const [ai, setAi] = React.useState({ status: 'idle', summary: null, weakPoints: [], changes: DEFAULT_CHANGES, nutrition: null, error: null });
 
   React.useEffect(() => subscribe(bump), []);
   React.useEffect(() => subscribeProfile(bump), []);
@@ -64,6 +64,8 @@ export function ProgressScreen() {
           context: {
             name: p.name,
             sex: p.sex,
+            age: p.age,
+            level: p.level,
             goal: p.goal,
             heightCm: p.height,
             weightKg: p.weight,
@@ -80,12 +82,28 @@ export function ProgressScreen() {
       setAi({
         status: 'done',
         summary: data.summary || null,
+        weakPoints: Array.isArray(data.weakPoints) ? data.weakPoints : [],
         changes: Array.isArray(data.changes) && data.changes.length ? data.changes : DEFAULT_CHANGES,
+        nutrition: data.nutrition || null,
         error: null,
       });
     } catch (e) {
       setAi((a) => ({ ...a, status: 'error', error: e.message || 'Analyse indisponible' }));
     }
+  };
+
+  const applyAi = () => {
+    if (ai.nutrition && ai.nutrition.kcal) {
+      setField('nutritionOverride', {
+        kcalGoal: Math.round(ai.nutrition.kcal),
+        p: Math.round(ai.nutrition.protein),
+        c: Math.round(ai.nutrition.carbs),
+        f: Math.round(ai.nutrition.fat),
+      });
+    }
+    setAiOpen(false);
+    setToast(ai.nutrition ? 'Programme et nutrition mis à jour ✅' : 'Nouveau programme appliqué dès lundi');
+    setTimeout(() => setToast(false), 2800);
   };
 
   return (
@@ -128,6 +146,19 @@ export function ProgressScreen() {
               <p style={{ margin: 0, fontSize: 15.5, lineHeight: 1.5, fontWeight: 600, color: 'rgba(255,255,255,.92)' }}>
                 Ajoute tes photos face · côté · dos et renseigne tes mensurations, puis lance l'analyse : Claude évalue ton évolution et adapte ton programme.
               </p>
+            )}
+
+            {ai.status === 'done' && ai.weakPoints && ai.weakPoints.length > 0 && (
+              <div style={{ marginTop: 14 }}>
+                <div style={{ fontSize: 10.5, fontWeight: 800, letterSpacing: .5, textTransform: 'uppercase', color: 'rgba(255,255,255,.45)', marginBottom: 8 }}>Points faibles détectés</div>
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 7 }}>
+                  {ai.weakPoints.map((w, i) => (
+                    <span key={i} style={{ display: 'inline-flex', alignItems: 'center', gap: 5, padding: '6px 11px', borderRadius: 999, background: 'rgba(255,176,32,.16)', color: '#FFCB6B', fontSize: 12, fontWeight: 800 }}>
+                      <Icon name="target" size={13} color="#FFCB6B" sw={2.6} />{w}
+                    </span>
+                  ))}
+                </div>
+              </div>
             )}
 
             {ai.error && (
@@ -208,20 +239,39 @@ export function ProgressScreen() {
       <MeasureEditor open={editor} onClose={() => setEditor(false)} profile={p} />
 
       {/* AI program sheet */}
-      <Sheet open={aiOpen} onClose={() => setAiOpen(false)} title="Programme ajusté par l'IA">
+      <Sheet open={aiOpen} onClose={() => setAiOpen(false)} title="Programme & nutrition ajustés">
         <p style={{ margin: '0 2px 16px', fontSize: 13.5, lineHeight: 1.5, color: T.ink2, fontWeight: 600 }}>Basé sur tes photos, ton poids et tes mensurations.</p>
+
+        <div style={{ fontSize: 12, fontWeight: 800, color: T.ink3, textTransform: 'uppercase', letterSpacing: .4, margin: '0 2px 10px' }}>Entraînement</div>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
           {ai.changes.map((ch, i) => <ChangeRow key={i} type={ch.type} title={ch.title} sub={ch.sub} />)}
         </div>
-        <button onClick={() => { setAiOpen(false); setToast(true); setTimeout(() => setToast(false), 2600); }} className="press" style={{ width: '100%', marginTop: 18, border: 'none', cursor: 'pointer', padding: '16px', borderRadius: 999, background: T.mint, color: '#08231A', fontSize: 15.5, fontWeight: 800, fontFamily: T.font, boxShadow: T.glow }}>
-          Appliquer ce programme
+
+        {ai.nutrition && (
+          <>
+            <div style={{ fontSize: 12, fontWeight: 800, color: T.ink3, textTransform: 'uppercase', letterSpacing: .4, margin: '18px 2px 10px' }}>Nutrition recommandée</div>
+            <div style={{ background: '#F7F9F8', borderRadius: 18, padding: '14px 16px' }}>
+              <div style={{ display: 'flex', alignItems: 'baseline', gap: 6 }}>
+                <span style={{ fontFamily: T.mono, fontSize: 24, fontWeight: 700 }}>{ai.nutrition.kcal}</span>
+                <span style={{ fontSize: 13, fontWeight: 700, color: T.ink3 }}>kcal / jour</span>
+              </div>
+              <div style={{ display: 'flex', gap: 14, marginTop: 8, fontSize: 13, fontWeight: 700, color: T.ink2 }}>
+                <span>P {ai.nutrition.protein}g</span><span>G {ai.nutrition.carbs}g</span><span>L {ai.nutrition.fat}g</span>
+              </div>
+              {ai.nutrition.advice && <p style={{ margin: '10px 0 0', fontSize: 12.5, lineHeight: 1.5, color: T.ink2, fontWeight: 600 }}>{ai.nutrition.advice}</p>}
+            </div>
+          </>
+        )}
+
+        <button onClick={applyAi} className="press" style={{ width: '100%', marginTop: 18, border: 'none', cursor: 'pointer', padding: '16px', borderRadius: 999, background: T.mint, color: '#08231A', fontSize: 15.5, fontWeight: 800, fontFamily: T.font, boxShadow: T.glow }}>
+          {ai.nutrition ? 'Appliquer programme + nutrition' : 'Appliquer ce programme'}
         </button>
       </Sheet>
 
       {toast && (
         <div style={{ position: 'absolute', bottom: 96, left: 18, right: 18, zIndex: 80, background: T.ink, color: '#fff', borderRadius: 16, padding: '14px 16px', display: 'flex', alignItems: 'center', gap: 10, boxShadow: T.pop, animation: 'slideUp .4s .04s forwards' }}>
           <Icon name="check" size={20} color={T.mint} sw={3}/>
-          <span style={{ fontSize: 14, fontWeight: 700 }}>Nouveau programme appliqué dès lundi</span>
+          <span style={{ fontSize: 14, fontWeight: 700 }}>{toast}</span>
         </div>
       )}
     </div>
@@ -321,24 +371,38 @@ function Measure({ label, value, delta: d, up, showDelta }) {
   );
 }
 
-function MeasureEditor({ open, onClose, profile }) {
-  const rows = [{ key: 'weight', label: 'Poids', unit: 'kg', step: 0.1 }, HEIGHT_FIELD, ...FIELDS];
+function Segmented({ label, value, options, onPick }) {
   return (
-    <Sheet open={open} onClose={onClose} title="Mes mensurations">
-      <p style={{ margin: '0 2px 14px', fontSize: 13, lineHeight: 1.5, color: T.ink2, fontWeight: 600 }}>
-        Tiens-les à jour : l'IA s'en sert pour adapter ton programme.
-      </p>
-
-      <div style={{ fontSize: 12, fontWeight: 800, color: T.ink3, textTransform: 'uppercase', letterSpacing: .4, margin: '0 2px 8px' }}>Objectif</div>
+    <>
+      <div style={{ fontSize: 12, fontWeight: 800, color: T.ink3, textTransform: 'uppercase', letterSpacing: .4, margin: '0 2px 8px' }}>{label}</div>
       <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginBottom: 16 }}>
-        {GOALS.map((g) => {
-          const on = profile.goal === g;
+        {options.map((o) => {
+          const on = value === o;
           return (
-            <div key={g} onClick={() => setField('goal', g)} className="presslite" style={{ padding: '9px 14px', borderRadius: 999, fontSize: 13, fontWeight: 800, cursor: 'pointer',
-              background: on ? T.ink : '#F1F4F2', color: on ? '#fff' : T.ink2 }}>{g}</div>
+            <div key={o} onClick={() => onPick(o)} className="presslite" style={{ padding: '9px 14px', borderRadius: 999, fontSize: 13, fontWeight: 800, cursor: 'pointer',
+              background: on ? T.ink : '#F1F4F2', color: on ? '#fff' : T.ink2 }}>{o}</div>
           );
         })}
       </div>
+    </>
+  );
+}
+
+function MeasureEditor({ open, onClose, profile }) {
+  const rows = [
+    { key: 'weight', label: 'Poids', unit: 'kg', step: 0.1 },
+    HEIGHT_FIELD,
+    { key: 'age', label: 'Âge', unit: 'ans', step: 1 },
+    ...FIELDS,
+  ];
+  return (
+    <Sheet open={open} onClose={onClose} title="Mon profil & mensurations">
+      <p style={{ margin: '0 2px 14px', fontSize: 13, lineHeight: 1.5, color: T.ink2, fontWeight: 600 }}>
+        Ces infos servent de base : l'app adapte automatiquement tes calories, tes macros et les charges du programme.
+      </p>
+
+      <Segmented label="Objectif" value={profile.goal} options={GOALS} onPick={(v) => setField('goal', v)} />
+      <Segmented label="Niveau" value={profile.level} options={LEVELS} onPick={(v) => setField('level', v)} />
 
       <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
         {rows.map((f) => (

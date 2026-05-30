@@ -2,7 +2,8 @@
 import React from 'react';
 import { T, Icon, Chip, Sheet, ExerciseGif } from '../theme.jsx';
 import { getProgramId, setProgramId, subscribeProgram } from '../programStore.js';
-import { PROGRAMS, getProgramById, WEEKDAYS, durationOf, todayIndex, dayForSlot, shortLabel } from '../programs.js';
+import { subscribeProfile } from '../profileStore.js';
+import { PROGRAMS, getProgramById, WEEKDAYS, durationOf, todayIndex, dayForSlot, shortLabel, adaptDay } from '../programs.js';
 
 export function ProgramScreen({ openSession }) {
   const [, bump] = React.useReducer((x) => x + 1, 0);
@@ -11,9 +12,11 @@ export function ProgramScreen({ openSession }) {
   const [slot, setSlot] = React.useState(tIdx);
 
   React.useEffect(() => subscribeProgram(bump), []);
+  React.useEffect(() => subscribeProfile(bump), []);
 
   const program = getProgramById(getProgramId());
-  const day = dayForSlot(program, slot);
+  const rawDay = dayForSlot(program, slot);
+  const day = adaptDay(rawDay); // affichage avec charges adaptées (App ré-adapte pour la séance)
 
   return (
     <div style={{ padding: '6px 18px 12px', animation: 'fadeIn .4s .04s forwards' }}>
@@ -82,7 +85,7 @@ export function ProgramScreen({ openSession }) {
             ))}
           </div>
 
-          <button onClick={() => openSession(day)} className="press" style={{ width: '100%', marginTop: 22, border: 'none', cursor: 'pointer',
+          <button onClick={() => openSession(rawDay)} className="press" style={{ width: '100%', marginTop: 22, border: 'none', cursor: 'pointer',
             padding: '17px', borderRadius: 999, background: T.mint, color: '#08231A', fontSize: 16.5, fontWeight: 800, fontFamily: T.font,
             boxShadow: T.glow, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 9 }}>
             <Icon name="play" size={20} color="#08231A" /> Commencer la séance

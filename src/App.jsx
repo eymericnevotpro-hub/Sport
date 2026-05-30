@@ -7,13 +7,12 @@ import { SessionScreen } from './screens/Session.jsx';
 import { NutritionScreen } from './screens/Nutrition.jsx';
 import { ProgressScreen } from './screens/Progress.jsx';
 import { getProgramId, subscribeProgram } from './programStore.js';
-import { getProgramById, todayIndex, dayForSlot } from './programs.js';
+import { getProgramById, todayIndex, dayForSlot, adaptDay } from './programs.js';
+import { getProfile, subscribeProfile } from './profileStore.js';
+import { computeNutritionGoal } from './nutrition.js';
 
 // Accent couleur par défaut : orange.
 applyAccent('#FF7A4D');
-
-// Nutrition goals (targets); consumed values start at 0 — user logs his own.
-const NUTRITION_GOAL = { kcalGoal: 2200, p: 160, c: 220, f: 70 };
 
 const NAV = [
   { k: 'home', l: 'Accueil', icon: 'home' },
@@ -57,19 +56,22 @@ function Phone({ landscape }) {
   const [, bump] = React.useReducer((x) => x + 1, 0);
 
   React.useEffect(() => subscribeProgram(bump), []);
+  React.useEffect(() => subscribeProfile(bump), []);
 
   const program = getProgramById(getProgramId());
   const tIdx = todayIndex();
   const todayDay = dayForSlot(program, tIdx);
+  const nutritionGoal = computeNutritionGoal(getProfile());
 
-  const openSession = (day) => { if (day) { setSessionDay(day); } };
+  // Charge la séance avec des poids adaptés au profil de l'athlète.
+  const openSession = (day) => { if (day) { setSessionDay(adaptDay(day)); } };
 
   const screen = () => {
     switch (tab) {
-      case 'home': return <HomeScreen user="Brick" today={todayDay} nutritionGoal={NUTRITION_GOAL}
+      case 'home': return <HomeScreen user="Brick" today={todayDay} nutritionGoal={nutritionGoal}
         nav={setTab} openToday={() => openSession(todayDay)} goProgram={() => setTab('program')} />;
       case 'program': return <ProgramScreen openSession={openSession} />;
-      case 'nutrition': return <NutritionScreen goal={NUTRITION_GOAL} />;
+      case 'nutrition': return <NutritionScreen goal={nutritionGoal} />;
       case 'progress': return <ProgressScreen />;
       default: return null;
     }

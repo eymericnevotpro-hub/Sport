@@ -1,6 +1,7 @@
 /* screens/Nutrition.jsx */
 import React from 'react';
 import { T, Icon, Ring, MacroBar, SectionTitle, Sheet } from '../theme.jsx';
+import { setField } from '../profileStore.js';
 
 export function NutritionScreen({ goal }) {
   const kcalGoal = goal.kcalGoal;
@@ -36,6 +37,15 @@ export function NutritionScreen({ goal }) {
       <div style={{ padding: '10px 2px 16px' }}>
         <div style={{ fontSize: 12.5, fontWeight: 700, color: T.ink3, letterSpacing: .3, textTransform: 'uppercase' }}>Aujourd'hui</div>
         <h1 style={{ margin: '3px 0 0', fontSize: 26, fontWeight: 800, letterSpacing: -0.7 }}>Nutrition</h1>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 8 }}>
+          <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5, padding: '5px 10px', borderRadius: 999, background: goal.override ? T.indigoSoft : T.mintSoft, color: goal.override ? T.indigo : T.mintDk, fontSize: 11.5, fontWeight: 800 }}>
+            <Icon name={goal.override ? 'sparkle' : 'target'} size={13} sw={2.4} />
+            {goal.override ? 'Objectif IA' : goal.computed ? 'Adapté à ton profil' : 'Objectif par défaut'}
+          </span>
+          {goal.override && (
+            <span onClick={() => setField('nutritionOverride', null)} className="presslite" style={{ fontSize: 11.5, fontWeight: 700, color: T.ink3, cursor: 'pointer', textDecoration: 'underline' }}>calcul auto</span>
+          )}
+        </div>
       </div>
 
       {/* calories + macros card */}

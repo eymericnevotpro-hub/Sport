@@ -8,18 +8,23 @@ const MAX_IMAGES = 6;
 
 const REPORT_TOOL = {
   name: 'report',
-  description: "Renvoie le bilan de progression physique et le programme d'entraînement ajusté.",
+  description: "Renvoie le bilan physique, les points faibles, le programme d'entraînement ajusté et les recommandations nutritionnelles.",
   input_schema: {
     type: 'object',
     properties: {
       summary: {
         type: 'string',
         description:
-          "Bilan court (2-3 phrases) en français, ton de coach motivant et tutoiement. Mentionne les points forts observés et 1 point faible, et l'orientation du programme. Pas de markdown.",
+          "Bilan court (2-3 phrases) en français, ton de coach motivant et tutoiement. Points forts observés et orientation générale. Pas de markdown.",
+      },
+      weakPoints: {
+        type: 'array',
+        description: "2 à 4 points faibles / zones en retard observés sur les photos (ex: 'Bas du dos', 'Mollets', 'Pectoraux supérieurs', 'Gras abdominal').",
+        items: { type: 'string' },
       },
       changes: {
         type: 'array',
-        description: "3 à 5 ajustements concrets du programme d'entraînement.",
+        description: "3 à 5 ajustements concrets du programme d'entraînement, ciblant les points faibles.",
         items: {
           type: 'object',
           properties: {
@@ -30,8 +35,20 @@ const REPORT_TOOL = {
           required: ['type', 'title', 'sub'],
         },
       },
+      nutrition: {
+        type: 'object',
+        description: "Recommandation nutritionnelle quotidienne adaptée à l'objectif, au physique observé et aux mensurations.",
+        properties: {
+          kcal: { type: 'number', description: 'Calories par jour recommandées.' },
+          protein: { type: 'number', description: 'Protéines en grammes/jour.' },
+          carbs: { type: 'number', description: 'Glucides en grammes/jour.' },
+          fat: { type: 'number', description: 'Lipides en grammes/jour.' },
+          advice: { type: 'string', description: '1-2 phrases de conseil nutritionnel concret (ex: priorité protéines, hydratation, réduction sucres).' },
+        },
+        required: ['kcal', 'protein', 'carbs', 'fat', 'advice'],
+      },
     },
-    required: ['summary', 'changes'],
+    required: ['summary', 'weakPoints', 'changes', 'nutrition'],
   },
 };
 
@@ -71,11 +88,15 @@ export default async function handler(req, res) {
     {
       type: 'text',
       text:
-        "Tu es un coach de musculation expert. Analyse ces photos de progression physique " +
-        "(face / côté / dos, parfois avant/après) et propose un programme ajusté.\n\n" +
-        'Contexte de l\'athlète : ' + JSON.stringify(context) + '\n\n' +
+        "Tu es un coach de musculation et nutrition expert. Analyse ces photos de progression physique " +
+        "(face / côté / dos, parfois avant/après).\n\n" +
+        'Contexte de l\'athlète (sers-t\'en comme base) : ' + JSON.stringify(context) + '\n\n' +
+        'À partir de ce que tu OBSERVES sur les photos et du contexte :\n' +
+        '1) identifie les points faibles / zones en retard,\n' +
+        '2) propose des ajustements de programme qui ciblent ces points faibles,\n' +
+        "3) donne une recommandation nutritionnelle quotidienne (kcal + macros) cohérente avec l'objectif et le physique observé.\n\n" +
         'Pour chaque photo, son angle/époque est indiqué juste avant. ' +
-        "Sois bienveillant, précis et concret. Réponds en appelant l'outil report.",
+        "Sois bienveillant, précis et concret. Réponds uniquement en appelant l'outil report.",
     },
   ];
   for (const p of valid) {
@@ -113,7 +134,13 @@ export default async function handler(req, res) {
       res.status(502).json({ error: 'Réponse IA invalide.' });
       return;
     }
-    res.status(200).json({ summary: tool.input.summary, changes: tool.input.changes });
+    const out = tool.input;
+    res.status(200).json({
+      summary: out.summary,
+      weakPoints: out.weakPoints || [],
+      changes: out.changes || [],
+      nutrition: out.nutrition || null,
+    });
   } catch (e) {
     console.error('analyze handler error', e);
     res.status(500).json({ error: "Erreur serveur pendant l'analyse." });

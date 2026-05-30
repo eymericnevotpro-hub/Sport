@@ -1,4 +1,5 @@
 /* programs.js — exercise library + selectable training programs (PPL, split, etc.) */
+import { getProfile } from './profileStore.js';
 
 // Exercise library: key → display name + illustrated GIF.
 const EX = {
@@ -117,3 +118,22 @@ const SHORT = {
   'Haut du corps': 'Haut', 'Bas du corps': 'Bas', 'Full Body': 'Full',
 };
 export const shortLabel = (day) => (day ? (SHORT[day.title] || day.title.split(' · ')[0]) : 'Repos');
+
+// Adapte les charges suggérées au poids de corps + niveau de l'athlète.
+// Les charges du template sont calibrées pour un pratiquant intermédiaire ~80 kg.
+const REF_BW = 80;
+const LEVEL_MULT = { 'Débutant': 0.7, 'Intermédiaire': 1.0, 'Avancé': 1.2 };
+export function adaptDay(day) {
+  if (!day) return day;
+  const p = getProfile();
+  const bw = p.weight || 0;
+  if (!bw) return day; // pas encore de poids → garder le template
+  const factor = (bw / REF_BW) * (LEVEL_MULT[p.level] || 1);
+  return {
+    ...day,
+    exercises: day.exercises.map((ex) => ({
+      ...ex,
+      weight: ex.weight ? Math.max(2.5, Math.round((ex.weight * factor) / 2.5) * 2.5) : 0,
+    })),
+  };
+}

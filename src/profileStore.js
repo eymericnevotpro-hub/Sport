@@ -11,15 +11,19 @@ const DEFAULTS = {
   name: 'Brick',
   sex: 'homme',
   goal: 'Prise de masse',
+  level: 'Intermédiaire',
+  age: 0,
   weight: 0,
   height: 0,        // taille corporelle (hauteur)
   poitrine: 0,
   bras: 0,
   taille: 0,        // tour de taille (circonférence)
   cuisse: 0,
+  nutritionOverride: null, // {kcalGoal,p,c,f} appliqué depuis l'analyse IA
 };
 
 export const GOALS = ['Prise de masse', 'Perte de gras', 'Maintien', 'Force'];
+export const LEVELS = ['Débutant', 'Intermédiaire', 'Avancé'];
 
 // Champ « hauteur » à part : ne varie pas comme une mensuration, pas de delta.
 export const HEIGHT_FIELD = { key: 'height', label: 'Taille (hauteur)', unit: 'cm', step: 1 };
