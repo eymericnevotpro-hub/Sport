@@ -48,6 +48,28 @@ export function clearMeals() {
   persist(); notify();
 }
 
+// Remplace tout le plan (utilisé par le chat IA). meals = {b,l,s,d} d'aliments.
+function sanitizeFood(it) {
+  return {
+    name: String(it.name || 'Aliment').slice(0, 60),
+    qty: typeof it.qty === 'number' ? it.qty : null,
+    unit: typeof it.unit === 'string' ? it.unit : '',
+    kcal: Math.round(it.kcal || 0),
+    p: Math.round(it.p || it.protein || 0),
+    c: Math.round(it.c || it.carbs || 0),
+    f: Math.round(it.f || it.fat || 0),
+  };
+}
+export function setMeals(meals) {
+  ensureToday();
+  const clean = { b: [], l: [], s: [], d: [] };
+  for (const k of ['b', 'l', 's', 'd']) {
+    if (Array.isArray(meals && meals[k])) clean[k] = meals[k].map(sanitizeFood);
+  }
+  state = { ...state, meals: clean };
+  persist(); notify();
+}
+
 // Cloud sync hooks.
 export function exportState() { return state; }
 export function importState(s) {

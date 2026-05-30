@@ -5,6 +5,19 @@
 const MODEL = 'claude-sonnet-4-6';
 const apiKey = process.env.ANTHROPIC_API_KEY;
 
+const FOOD_ITEM = {
+  type: 'object',
+  properties: {
+    name: { type: 'string' },
+    qty: { type: 'number', description: 'Quantité (ex: 150 pour 150 g, 2 pour 2 unités).' },
+    unit: { type: 'string', description: "Unité ('g', '' pour unités, etc.)." },
+    kcal: { type: 'number' },
+    protein: { type: 'number' }, carbs: { type: 'number' }, fat: { type: 'number' },
+  },
+  required: ['name', 'kcal'],
+};
+const MEAL_ARRAY = { type: 'array', items: FOOD_ITEM };
+
 const RESPOND_TOOL = {
   name: 'respond',
   description: "Répond à l'utilisateur et, si pertinent, applique des changements dans l'app.",
@@ -18,10 +31,28 @@ const RESPOND_TOOL = {
         items: {
           type: 'object',
           properties: {
-            type: { type: 'string', enum: ['set_program', 'set_nutrition'] },
-            programId: { type: 'string', enum: ['ppl', 'split', 'upperlow', 'fullbody'], description: 'Pour set_program : ppl=Push/Pull/Legs, split=Split par muscle, upperlow=Haut/Bas, fullbody=Full Body.' },
+            type: { type: 'string', enum: ['set_program', 'set_nutrition', 'set_meal_plan', 'set_day_exercises'] },
+            programId: { type: 'string', enum: ['ppl', 'split', 'upperlow', 'fullbody'], description: 'Pour set_program.' },
             kcal: { type: 'number', description: 'Pour set_nutrition : calories/jour.' },
             protein: { type: 'number' }, carbs: { type: 'number' }, fat: { type: 'number' },
+            day: { type: 'string', description: "Pour set_day_exercises : le TITRE exact d'un jour du programme actuel (voir context.joursDuProgramme)." },
+            exercises: {
+              type: 'array',
+              description: "Pour set_day_exercises : nouvelle liste d'exercices. Utilise UNIQUEMENT des clés de context.exercicesDisponibles.",
+              items: {
+                type: 'object',
+                properties: {
+                  key: { type: 'string', description: "Clé d'exercice de la bibliothèque (context.exercicesDisponibles)." },
+                  sets: { type: 'number' }, reps: { type: 'number' }, weight: { type: 'number', description: 'kg (0 si poids du corps).' },
+                },
+                required: ['key', 'sets', 'reps'],
+              },
+            },
+            meals: {
+              type: 'object',
+              description: "Pour set_meal_plan : repas de la journée (chaque aliment avec quantité + macros).",
+              properties: { b: MEAL_ARRAY, l: MEAL_ARRAY, s: MEAL_ARRAY, d: MEAL_ARRAY },
+            },
           },
           required: ['type'],
         },
@@ -53,9 +84,13 @@ export default async function handler(req, res) {
     "bienveillant, qui tutoie et reste concis et concret.\n\n" +
     'Profil et état actuels de l\'utilisateur : ' + JSON.stringify(context) + '\n\n' +
     "Tu peux APPLIQUER des changements via l'outil respond > actions :\n" +
-    "- set_program(programId) parmi : ppl (Push/Pull/Legs), split (Split par muscle), upperlow (Haut/Bas), fullbody (Full Body).\n" +
-    "- set_nutrition(kcal, protein, carbs, fat) pour fixer les objectifs nutritionnels quotidiens.\n" +
-    "N'applique une action que si l'utilisateur le demande clairement. Sinon, réponds juste. " +
+    "- set_program(programId) : ppl, split, upperlow, fullbody.\n" +
+    "- set_nutrition(kcal, protein, carbs, fat) : objectifs nutritionnels quotidiens.\n" +
+    "- set_day_exercises(day, exercises) : remplace les exercices d'UNE séance. `day` = le titre EXACT d'un jour de context.joursDuProgramme. " +
+    "`exercises` n'utilise QUE des `key` listées dans context.exercicesDisponibles (sinon pas de visuel). Donne sets/reps/weight cohérents avec le niveau et le poids de l'athlète.\n" +
+    "- set_meal_plan(meals) : crée le plan repas du jour (b/l/s/d) avec quantités et macros, en visant context.nutritionCible (ex: plan végétarien, plus de protéines, etc.).\n\n" +
+    "Quand l'utilisateur demande un changement de programme sport ou de nutrition, APPLIQUE-le via les actions, et confirme brièvement dans `reply`. " +
+    "Si une demande d'exercice n'existe pas dans la bibliothèque, choisis l'équivalent le plus proche disponible et précise-le. " +
     "Réponds toujours en appelant l'outil respond.";
 
   try {

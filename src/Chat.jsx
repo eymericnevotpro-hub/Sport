@@ -2,9 +2,10 @@
 import React from 'react';
 import { T, Icon } from './theme.jsx';
 import { getProfile, setField } from './profileStore.js';
-import { getProgramId, setProgramId } from './programStore.js';
-import { getProgramById, PROGRAMS } from './programs.js';
+import { getProgramId, setProgramId, setDayExercises, withOverride } from './programStore.js';
+import { getProgramById, PROGRAMS, exerciseList, makeExercise } from './programs.js';
 import { computeNutritionGoal } from './nutrition.js';
+import { setMeals } from './nutritionStore.js';
 
 function applyActions(actions) {
   const applied = [];
@@ -18,6 +19,18 @@ function applyActions(actions) {
         p: Math.round(a.protein || 0), c: Math.round(a.carbs || 0), f: Math.round(a.fat || 0),
       });
       applied.push('Nutrition : ' + Math.round(a.kcal) + ' kcal');
+    } else if (a.type === 'set_meal_plan' && a.meals) {
+      const m = {};
+      for (const k of ['b', 'l', 's', 'd']) {
+        m[k] = (a.meals[k] || []).map((it) => ({ name: it.name, qty: it.qty, unit: it.unit, kcal: it.kcal, p: it.protein, c: it.carbs, f: it.fat }));
+      }
+      setMeals(m);
+      applied.push('Plan nutrition mis à jour');
+    } else if (a.type === 'set_day_exercises' && a.day && Array.isArray(a.exercises)) {
+      const exos = a.exercises
+        .map((e) => makeExercise(e.key, e.sets, e.reps, e.weight, e.rest))
+        .filter(Boolean);
+      if (exos.length) { setDayExercises(a.day, exos); applied.push('Séance « ' + a.day + ' » modifiée'); }
     }
   }
   return applied;
@@ -33,6 +46,13 @@ function buildContext() {
     mensurations_cm: { poitrine: p.poitrine, bras: p.bras, tourDeTaille: p.taille, cuisse: p.cuisse },
     programmeActuel: pr.name, programmeId: pr.id,
     nutritionCible: { kcal: g.kcalGoal, prot: g.p, gluc: g.c, lip: g.f },
+    // Jours du programme actuel (titres = identifiants pour set_day_exercises)
+    joursDuProgramme: pr.days.map((d) => ({
+      titre: d.title,
+      exercices: withOverride(d).exercises.map((e) => ({ nom: e.name, series: e.sets, reps: e.reps })),
+    })),
+    // Bibliothèque d'exercices disponibles (clés valides pour set_day_exercises)
+    exercicesDisponibles: exerciseList(),
   };
 }
 

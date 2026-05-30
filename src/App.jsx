@@ -6,7 +6,7 @@ import { ProgramScreen } from './screens/Program.jsx';
 import { SessionScreen } from './screens/Session.jsx';
 import { NutritionScreen } from './screens/Nutrition.jsx';
 import { ProgressScreen } from './screens/Progress.jsx';
-import { getProgramId, subscribeProgram } from './programStore.js';
+import { getProgramId, subscribeProgram, withOverride } from './programStore.js';
 import { getProgramById, todayIndex, dayForSlot, adaptDay } from './programs.js';
 import { getProfile, subscribeProfile } from './profileStore.js';
 import { computeNutritionGoal } from './nutrition.js';
@@ -61,11 +61,11 @@ function Phone({ landscape }) {
 
   const program = getProgramById(getProgramId());
   const tIdx = todayIndex();
-  const todayDay = dayForSlot(program, tIdx);
+  const todayDay = withOverride(dayForSlot(program, tIdx));
   const nutritionGoal = computeNutritionGoal(getProfile());
 
-  // Charge la séance avec des poids adaptés au profil de l'athlète.
-  const openSession = (day) => { if (day) { setSessionDay(adaptDay(day)); } };
+  // Charge la séance avec exercices personnalisés + poids adaptés au profil.
+  const openSession = (day) => { if (day) { setSessionDay(adaptDay(withOverride(day))); } };
 
   const screen = () => {
     switch (tab) {

@@ -39,6 +39,16 @@ const EX = {
 // ex(key, sets, reps, weight, rest) → full exercise object
 const ex = (key, sets, reps, weight, rest) => ({ ...EX[key], sets, reps, weight, rest });
 
+// Bibliothèque exposée au chat IA (clés valides + noms, GIF garanti).
+export function exerciseList() {
+  return Object.keys(EX).map((k) => ({ key: k, name: EX[k].name }));
+}
+// Construit un exercice complet à partir d'une clé de la bibliothèque.
+export function makeExercise(key, sets, reps, weight, rest) {
+  if (!EX[key]) return null;
+  return { ...EX[key], sets: sets || 3, reps: reps || 12, weight: weight || 0, rest: rest || 75 };
+}
+
 const DAYS = {
   push:    { title: 'Push · Pecs / Épaules / Triceps', kcal: 430, exercises: [
     ex('bench', 4, 10, 40, 90), ex('incline', 3, 12, 24, 75), ex('shoulderpress', 3, 12, 16, 75),

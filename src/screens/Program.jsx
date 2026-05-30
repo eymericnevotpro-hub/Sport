@@ -1,7 +1,7 @@
 /* screens/Program.jsx — program picker + weekly day strip + selected workout */
 import React from 'react';
 import { T, Icon, Chip, Sheet, ExerciseGif } from '../theme.jsx';
-import { getProgramId, setProgramId, subscribeProgram } from '../programStore.js';
+import { getProgramId, setProgramId, subscribeProgram, withOverride } from '../programStore.js';
 import { subscribeProfile } from '../profileStore.js';
 import { PROGRAMS, getProgramById, WEEKDAYS, durationOf, todayIndex, dayForSlot, shortLabel, adaptDay } from '../programs.js';
 
@@ -15,8 +15,8 @@ export function ProgramScreen({ openSession }) {
   React.useEffect(() => subscribeProfile(bump), []);
 
   const program = getProgramById(getProgramId());
-  const rawDay = dayForSlot(program, slot);
-  const day = adaptDay(rawDay); // affichage avec charges adaptées (App ré-adapte pour la séance)
+  const rawDay = withOverride(dayForSlot(program, slot));
+  const day = adaptDay(rawDay); // affichage avec exos perso + charges adaptées
 
   return (
     <div style={{ padding: '6px 18px 12px', animation: 'fadeIn .4s .04s forwards' }}>
