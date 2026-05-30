@@ -44,18 +44,21 @@ const DAYS = {
     ex('squat', 4, 10, 60, 120), ex('rdl', 3, 10, 50, 90), ex('lunge', 3, 12, 16, 75),
     ex('legcurl', 3, 15, 35, 60), ex('calf', 4, 15, 40, 45) ] },
 
-  pecsTri: { title: 'Pecs & Triceps', kcal: 430, exercises: [
-    ex('bench', 4, 12, 24, 90), ex('fly', 3, 15, 12, 75), ex('incline', 4, 10, 28, 90),
-    ex('dips', 3, 12, 10, 75), ex('pushdown', 3, 15, 25, 60), ex('closegrip', 3, 12, 20, 60) ] },
-  dosBi:   { title: 'Dos & Biceps', kcal: 440, exercises: [
-    ex('pullup', 4, 8, 0, 90), ex('pulldown', 3, 12, 50, 75), ex('row', 4, 10, 50, 90),
-    ex('seatedrow', 3, 12, 45, 75), ex('barbellcurl', 3, 12, 25, 60), ex('dumbbellcurl', 3, 12, 12, 60) ] },
+  pecs:    { title: 'Pectoraux', kcal: 400, exercises: [
+    ex('bench', 4, 10, 40, 90), ex('incline', 4, 10, 28, 90), ex('fly', 3, 15, 12, 75),
+    ex('dips', 3, 12, 0, 75) ] },
+  dos:     { title: 'Dos', kcal: 430, exercises: [
+    ex('pullup', 4, 8, 0, 90), ex('pulldown', 4, 10, 50, 90), ex('row', 4, 10, 50, 90),
+    ex('seatedrow', 3, 12, 45, 75), ex('shrug', 3, 15, 30, 60) ] },
   jambes:  { title: 'Jambes', kcal: 480, exercises: [
     ex('squat', 4, 10, 60, 120), ex('deadlift', 3, 8, 80, 120), ex('lunge', 3, 12, 16, 75),
     ex('legcurl', 3, 15, 35, 60), ex('calf', 4, 15, 40, 45) ] },
-  epaules: { title: 'Épaules', kcal: 360, exercises: [
+  epaules: { title: 'Épaules', kcal: 350, exercises: [
     ex('ohp', 4, 10, 40, 90), ex('lateral', 4, 15, 10, 60), ex('front', 3, 12, 10, 60),
-    ex('reardelt', 3, 15, 8, 60), ex('shrug', 3, 15, 30, 60) ] },
+    ex('reardelt', 3, 15, 8, 60) ] },
+  bras:    { title: 'Bras · Biceps / Triceps', kcal: 320, exercises: [
+    ex('barbellcurl', 3, 12, 25, 60), ex('dumbbellcurl', 3, 12, 12, 60), ex('hammercurl', 3, 12, 12, 60),
+    ex('pushdown', 3, 12, 25, 60), ex('closegrip', 3, 10, 30, 75), ex('rope', 3, 15, 20, 60) ] },
 
   haut:    { title: 'Haut du corps', kcal: 450, exercises: [
     ex('bench', 4, 10, 40, 90), ex('pulldown', 4, 10, 50, 90), ex('shoulderpress', 3, 12, 16, 75),
@@ -74,8 +77,8 @@ const DAYS = {
 export const PROGRAMS = [
   { id: 'ppl',      name: 'Push / Pull / Legs', sub: '6 jours / semaine', days: [DAYS.push, DAYS.pull, DAYS.legs],
     week: [0, 1, 2, 0, 1, 2, 'rest'] },
-  { id: 'split',    name: 'Split classique',    sub: '4 jours · 1 muscle/jour', days: [DAYS.pecsTri, DAYS.dosBi, DAYS.jambes, DAYS.epaules],
-    week: [0, 1, 'rest', 2, 3, 'rest', 'rest'] },
+  { id: 'split',    name: 'Split par muscle',   sub: '5 jours · 1 groupe/jour', days: [DAYS.pecs, DAYS.dos, DAYS.jambes, DAYS.epaules, DAYS.bras],
+    week: [0, 1, 2, 3, 4, 'rest', 'rest'] },
   { id: 'upperlow', name: 'Haut / Bas',         sub: '4 jours', days: [DAYS.haut, DAYS.bas],
     week: [0, 1, 'rest', 0, 1, 'rest', 'rest'] },
   { id: 'fullbody', name: 'Full Body',          sub: '3 jours', days: [DAYS.full],
@@ -110,7 +113,7 @@ export function dayForSlot(program, slot) {
 // Short label for the weekly strip.
 const SHORT = {
   'Push · Pecs / Épaules / Triceps': 'Push', 'Pull · Dos / Biceps': 'Pull', 'Legs · Jambes': 'Legs',
-  'Pecs & Triceps': 'Pecs', 'Dos & Biceps': 'Dos', 'Jambes': 'Jambes', 'Épaules': 'Épaules',
+  'Pectoraux': 'Pecs', 'Dos': 'Dos', 'Bras · Biceps / Triceps': 'Bras', 'Jambes': 'Jambes', 'Épaules': 'Épaules',
   'Haut du corps': 'Haut', 'Bas du corps': 'Bas', 'Full Body': 'Full',
 };
 export const shortLabel = (day) => (day ? (SHORT[day.title] || day.title.split(' · ')[0]) : 'Repos');
