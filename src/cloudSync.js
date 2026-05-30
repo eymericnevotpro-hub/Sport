@@ -7,6 +7,7 @@
 import * as profile from './profileStore.js';
 import * as program from './programStore.js';
 import * as photos from './photoStore.js';
+import * as nutrition from './nutritionStore.js';
 
 let loaded = false;     // initial pull finished
 let hydrating = false;  // applying server data → don't echo it back
@@ -22,6 +23,7 @@ function snapshot() {
     profile: profile.exportState(),
     program: program.exportState(),
     photos: photos.exportState(),
+    nutrition: nutrition.exportState(),
   };
 }
 
@@ -40,6 +42,7 @@ async function pull() {
           if (d.profile) profile.importState(d.profile);
           if (d.program) program.importState(d.program);
           if (d.photos) photos.importState(d.photos);
+          if (d.nutrition) nutrition.importState(d.nutrition);
           lastSent = JSON.stringify(snapshot());
         } finally {
           hydrating = false;
@@ -83,6 +86,7 @@ export function initCloudSync() {
   profile.subscribeProfile(schedule);
   program.subscribeProgram(schedule);
   photos.subscribe(schedule);
+  nutrition.subscribeNutrition(schedule);
   pull();
   // When returning to the app (switching device/tab), re-pull after a short
   // delay — but only if nothing is pending and no local change interrupts it.

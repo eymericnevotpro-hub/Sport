@@ -60,6 +60,8 @@ export function Icon({ name, size = 24, color = 'currentColor', sw = 2.2, fill =
     info: <><circle {...p} cx="12" cy="12" r="8"/><path {...p} d="M12 11v5M12 8h.01"/></>,
     moon: <path {...p} d="M20 14.5A8 8 0 1 1 9.5 4 6.5 6.5 0 0 0 20 14.5Z"/>,
     settings: <><circle {...p} cx="12" cy="12" r="3"/><path {...p} d="M12 2.5v3M12 18.5v3M21.5 12h-3M5.5 12h-3M18.7 5.3l-2.1 2.1M7.4 16.6l-2.1 2.1M18.7 18.7l-2.1-2.1M7.4 7.4 5.3 5.3"/></>,
+    chat: <><path {...p} d="M4 6a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H9l-4 4v-4H6"/><path {...p} d="M8 9h8M8 12h5"/></>,
+    send: <path {...p} d="M4 12 20 4l-6 16-3-7-7-1Z"/>,
   };
   return (
     <svg width={size} height={size} viewBox="0 0 24 24" style={{ display: 'block', flexShrink: 0, ...style }}>

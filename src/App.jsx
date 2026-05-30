@@ -10,6 +10,7 @@ import { getProgramId, subscribeProgram } from './programStore.js';
 import { getProgramById, todayIndex, dayForSlot, adaptDay } from './programs.js';
 import { getProfile, subscribeProfile } from './profileStore.js';
 import { computeNutritionGoal } from './nutrition.js';
+import { Chat } from './Chat.jsx';
 
 // Accent couleur par défaut : orange.
 applyAccent('#FF7A4D');
@@ -98,6 +99,7 @@ function Phone({ landscape }) {
           <div style={{ maxWidth: 640, margin: '0 auto' }}>{screen()}</div>
         </div>
         {session}
+        <Chat landscape />
       </div>
     );
   }
@@ -112,6 +114,7 @@ function Phone({ landscape }) {
         {NAV.map((n) => <NavItem key={n.k} n={n} on={tab === n.k} onClick={() => setTab(n.k)} />)}
       </div>
       {session}
+      <Chat landscape={false} />
     </div>
   );
 }
