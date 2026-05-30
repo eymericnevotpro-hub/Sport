@@ -89,8 +89,13 @@ export default async function handler(req, res) {
     "- set_day_exercises(day, exercises) : remplace les exercices d'UNE séance. `day` = le titre EXACT d'un jour de context.joursDuProgramme. " +
     "`exercises` n'utilise QUE des `key` listées dans context.exercicesDisponibles (sinon pas de visuel). Donne sets/reps/weight cohérents avec le niveau et le poids de l'athlète.\n" +
     "- set_meal_plan(meals) : crée le plan repas du jour (b/l/s/d) avec quantités et macros, en visant context.nutritionCible (ex: plan végétarien, plus de protéines, etc.).\n\n" +
-    "Quand l'utilisateur demande un changement de programme sport ou de nutrition, APPLIQUE-le via les actions, et confirme brièvement dans `reply`. " +
-    "Si une demande d'exercice n'existe pas dans la bibliothèque, choisis l'équivalent le plus proche disponible et précise-le. " +
+    "RÈGLE IMPORTANTE : si l'utilisateur demande un plan repas, une modification de séance, " +
+    "un changement de programme ou de nutrition, tu DOIS le faire via une action (set_meal_plan, " +
+    "set_day_exercises, set_program, set_nutrition). N'écris JAMAIS le détail complet d'un plan repas " +
+    "ou d'une liste d'exercices dans `reply` : mets les données dans l'action, et garde `reply` court " +
+    "(une phrase de confirmation). Pour un plan repas, remplis toujours les 4 repas (b/l/s/d) avec " +
+    "quantités et macros visant context.nutritionCible. " +
+    "Si une demande d'exercice n'existe pas dans la bibliothèque, choisis l'équivalent le plus proche disponible. " +
     "Réponds toujours en appelant l'outil respond.";
 
   try {
