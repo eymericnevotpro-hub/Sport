@@ -60,17 +60,26 @@ function persistBaseline() {
 }
 
 export function getProfile() { return profile; }
-export function getBaseline(key) { return baseline[key] || 0; }
+// Le point de départ n'est exposé qu'une fois figé (sinon pas d'écart à montrer).
+export function getBaseline(key) { return baseline.__committed ? (baseline[key] || 0) : 0; }
 
 export function setField(key, value) {
   profile = { ...profile, [key]: value };
   persist();
-  // Record the starting point the first time a tracked field gets a real value.
-  if (TRACKED.includes(key) && !baseline[key] && value > 0) {
-    baseline[key] = value;
-    persistBaseline();
-  }
   subs.forEach((fn) => fn());
+}
+
+// Fige le point de départ (appelé quand l'utilisateur enregistre son profil).
+// Premier enregistrement → capture toutes les mesures actuelles comme base.
+// Ensuite → ne complète que les mesures qui n'avaient pas encore de base.
+export function commitBaseline() {
+  const first = !baseline.__committed;
+  let changed = false;
+  for (const k of TRACKED) {
+    if (profile[k] > 0 && (first || !baseline[k])) { baseline[k] = profile[k]; changed = true; }
+  }
+  if (!baseline.__committed) { baseline.__committed = true; changed = true; }
+  if (changed) { persistBaseline(); subs.forEach((fn) => fn()); }
 }
 
 export function subscribeProfile(fn) { subs.add(fn); return () => subs.delete(fn); }
@@ -85,6 +94,7 @@ export function importState(s) {
 }
 
 export function delta(key) {
+  if (!baseline.__committed) return 0; // pas encore de point de départ figé
   const base = baseline[key] || 0;
   if (!base || !profile[key]) return 0;
   return Math.round((profile[key] - base) * 10) / 10;

@@ -5,7 +5,7 @@ import { ImageSlot } from '../ImageSlot.jsx';
 import { getPhoto, subscribe } from '../photoStore.js';
 import {
   getProfile, subscribeProfile, setField, delta, fmt, fmtDelta,
-  getBaseline, GOALS, LEVELS, FIELDS, HEIGHT_FIELD,
+  getBaseline, commitBaseline, GOALS, LEVELS, FIELDS, HEIGHT_FIELD,
 } from '../profileStore.js';
 import { getProgramId } from '../programStore.js';
 import { getProgramById } from '../programs.js';
@@ -236,7 +236,7 @@ export function ProgressScreen() {
       )}
 
       {/* measurements editor */}
-      <MeasureEditor open={editor} onClose={() => setEditor(false)} profile={p} />
+      <MeasureEditor open={editor} onClose={() => { commitBaseline(); setEditor(false); }} profile={p} />
 
       {/* AI program sheet */}
       <Sheet open={aiOpen} onClose={() => setAiOpen(false)} title="Programme & nutrition ajustés">
